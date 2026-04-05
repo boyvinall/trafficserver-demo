@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  lint-and-validate:
+    name: Lint and Validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+
+      - name: Lint test scripts
+        run: |
+          echo "Linting shell scripts..."
+          shellcheck tests/*.sh
+
+      - name: Validate docker-compose.yml
+        run: |
+          echo "Validating docker-compose.yml syntax..."
+          docker-compose config > /dev/null
+
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: lint-and-validate
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            image=moby/buildkit:latest
+
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Build Docker images
+        timeout-minutes: 15
+        run: |
+          echo "Building Docker images..."
+          make build
+
+      - name: Start services
+        timeout-minutes: 5
+        run: |
+          echo "Starting services with health checks..."
+          docker-compose up -d --wait --wait-timeout 120
+
+      - name: Verify container status
+        if: always()
+        run: make ps
+
+      - name: Run tests
+        timeout-minutes: 10
+        run: make test
+
+      - name: Capture logs on failure
+        if: failure()
+        run: |
+          echo "Capturing logs for debugging..."
+          mkdir -p logs
+          for service in $(docker-compose ps --services); do
+            echo "Capturing logs for $service..."
+            docker-compose logs "$service" > "logs/${service}.log" 2>&1 || true
+          done
+
+      - name: Upload logs as artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-logs
+          path: logs/
+          retention-days: 7
+
+      - name: Cleanup Docker resources
+        if: always()
+        run: docker-compose down -v || true
