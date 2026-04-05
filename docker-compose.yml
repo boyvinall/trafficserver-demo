@@ -1,0 +1,244 @@
+services:
+  # ============================================
+  # HAProxy Load Balancer
+  # ============================================
+  haproxy:
+    image: haproxy:2.9-alpine
+    container_name: ats-haproxy
+    volumes:
+      - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    ports:
+      - "80:80"       # Main HTTP traffic
+      - "8404:8404"   # HAProxy stats page
+    networks:
+      - frontend
+      - monitoring
+    healthcheck:
+      test: ["CMD", "nc", "-z", "127.0.0.1", "80"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      - ats-1
+      - ats-2
+      - ats-3
+    restart: unless-stopped
+
+  # ============================================
+  # ATS Cache Nodes (3-node cluster)
+  # ============================================
+  ats-1:
+    build:
+      context: ./ats
+      dockerfile: Dockerfile
+    container_name: ats-node-1
+    hostname: ats-1
+    volumes:
+      - ats-cache-1:/cache/trafficserver
+      - ./ats/records.yaml:/etc/trafficserver/records.yaml:ro
+      - ./ats/remap.config:/etc/trafficserver/remap.config:ro
+      - ./ats/storage.config:/etc/trafficserver/storage.config:ro
+      - ./ats/plugin.config:/etc/trafficserver/plugin.config:ro
+      - ./ats/logging.yaml:/etc/trafficserver/logging.yaml:ro
+    environment:
+      - TS_NODE_ID=1
+    networks:
+      - frontend
+      - backend
+      - monitoring
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/_stats"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+
+  ats-2:
+    build:
+      context: ./ats
+      dockerfile: Dockerfile
+    container_name: ats-node-2
+    hostname: ats-2
+    volumes:
+      - ats-cache-2:/cache/trafficserver
+      - ./ats/records.yaml:/etc/trafficserver/records.yaml:ro
+      - ./ats/remap.config:/etc/trafficserver/remap.config:ro
+      - ./ats/storage.config:/etc/trafficserver/storage.config:ro
+      - ./ats/plugin.config:/etc/trafficserver/plugin.config:ro
+      - ./ats/logging.yaml:/etc/trafficserver/logging.yaml:ro
+    environment:
+      - TS_NODE_ID=2
+    networks:
+      - frontend
+      - backend
+      - monitoring
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/_stats"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+
+  ats-3:
+    build:
+      context: ./ats
+      dockerfile: Dockerfile
+    container_name: ats-node-3
+    hostname: ats-3
+    volumes:
+      - ats-cache-3:/cache/trafficserver
+      - ./ats/records.yaml:/etc/trafficserver/records.yaml:ro
+      - ./ats/remap.config:/etc/trafficserver/remap.config:ro
+      - ./ats/storage.config:/etc/trafficserver/storage.config:ro
+      - ./ats/plugin.config:/etc/trafficserver/plugin.config:ro
+      - ./ats/logging.yaml:/etc/trafficserver/logging.yaml:ro
+    environment:
+      - TS_NODE_ID=3
+    networks:
+      - frontend
+      - backend
+      - monitoring
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/_stats"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+
+  # ============================================
+  # Origin Servers
+  # ============================================
+  origin-web:
+    build:
+      context: ./origins/web
+      dockerfile: Dockerfile
+    container_name: ats-origin-web
+    hostname: origin-web
+    networks:
+      - backend
+      - monitoring
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:9001/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+
+  origin-api:
+    build:
+      context: ./origins/api
+      dockerfile: Dockerfile
+    container_name: ats-origin-api
+    hostname: origin-api
+    networks:
+      - backend
+      - monitoring
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:9002/api/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+
+  origin-static:
+    build:
+      context: ./origins/static
+      dockerfile: Dockerfile
+    container_name: ats-origin-static
+    hostname: origin-static
+    networks:
+      - backend
+      - monitoring
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:9003/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+
+  # ============================================
+  # Monitoring Stack
+  # ============================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ats-prometheus
+    hostname: prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--storage.tsdb.retention.time=7d'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ats-grafana
+    hostname: grafana
+    volumes:
+      - ./grafana/grafana.ini:/etc/grafana/grafana.ini:ro
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=
+    ports:
+      - "3000:3000"
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+# ============================================
+# Networks
+# ============================================
+networks:
+  frontend:
+    driver: bridge
+    name: ats-frontend
+  backend:
+    driver: bridge
+    name: ats-backend
+  monitoring:
+    driver: bridge
+    name: ats-monitoring
+
+# ============================================
+# Volumes (Persistent Storage)
+# ============================================
+volumes:
+  ats-cache-1:
+    name: ats-cache-1
+  ats-cache-2:
+    name: ats-cache-2
+  ats-cache-3:
+    name: ats-cache-3
+  prometheus-data:
+    name: ats-prometheus-data
+  grafana-data:
+    name: ats-grafana-data

@@ -1,0 +1,14 @@
+# Logging configuration for Apache Traffic Server
+# Provides detailed access logs for monitoring cache behavior
+
+formats:
+  - name: custom
+    format: '%<cqtq> %<ttms> %<chi> %<crc>/%<pssc> %<psql> %<cqhm> %<cquc> %<phr>/%<pqsn> %<psct>'
+
+logs:
+  - mode: ascii
+    format: custom
+    filename: access
+    rolling_enabled: 1
+    rolling_interval_sec: 86400  # Roll daily
+    rolling_size_mb: 1024

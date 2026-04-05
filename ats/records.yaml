@@ -1,0 +1,32 @@
+records:
+  proxy:
+    config:
+      # Enable stats for Prometheus monitoring
+      http:
+        enabled: 1
+      stats_over_http:
+        enabled: 1
+
+  http:
+    cache:
+      http: 1
+      required_headers: 0  # Cache even without explicit cache headers
+      ignore_client_no_cache: 0
+      heuristic_min_lifetime: 300  # 5 minutes default cache
+      heuristic_max_lifetime: 86400  # 24 hours max
+    server_ports: 8080 8080:ipv6
+    insert_response_via_str: 2  # Show which ATS node handled the request
+    insert_age_in_response: 1   # Add Age header to responses
+
+  reverse_proxy:
+    enabled: 1
+
+  url_remap:
+    pristine_host_hdr: 1
+    remap_required: 1
+
+  log:
+    logging_enabled: 3  # Full logging for debugging
+    max_secs_per_buffer: 5
+    max_space_mb_for_logs: 2000
+    max_space_mb_headroom: 1000

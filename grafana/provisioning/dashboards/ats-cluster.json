@@ -1,0 +1,261 @@
+{
+  "dashboard": {
+    "title": "ATS Cluster Overview",
+    "uid": "ats-cluster",
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "10s",
+    "time": {
+      "from": "now-30m",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "type": "stat",
+        "title": "ATS Nodes Status",
+        "gridPos": {"h": 6, "w": 6, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "sum(up{service=\"trafficserver\"})",
+            "legendFormat": "Online Nodes",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"]
+          },
+          "textMode": "value_and_name",
+          "colorMode": "value",
+          "graphMode": "none"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 2, "color": "yellow"},
+                {"value": 3, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "type": "stat",
+        "title": "Origin Servers Status",
+        "gridPos": {"h": 6, "w": 6, "x": 6, "y": 0},
+        "targets": [
+          {
+            "expr": "sum(up{service=\"backend\"})",
+            "legendFormat": "Online Origins",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"]
+          },
+          "textMode": "value_and_name",
+          "colorMode": "value",
+          "graphMode": "none"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 1, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 3,
+        "type": "stat",
+        "title": "Load Balancer Status",
+        "gridPos": {"h": 6, "w": 6, "x": 12, "y": 0},
+        "targets": [
+          {
+            "expr": "up{service=\"loadbalancer\"}",
+            "legendFormat": "HAProxy",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"]
+          },
+          "textMode": "value_and_name",
+          "colorMode": "value",
+          "graphMode": "none"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 1, "color": "green"}
+              ]
+            },
+            "mappings": [
+              {"type": "value", "options": {"0": {"text": "DOWN"}}},
+              {"type": "value", "options": {"1": {"text": "UP"}}}
+            ]
+          }
+        }
+      },
+      {
+        "id": 4,
+        "type": "text",
+        "title": "Cluster Information",
+        "gridPos": {"h": 6, "w": 6, "x": 18, "y": 0},
+        "options": {
+          "mode": "markdown",
+          "content": "## ATS Cluster\\n\\n**Architecture:** 3-Node Cluster\\n\\n**Load Balancing:** Consistent Hashing\\n\\n**Monitoring:** Prometheus + Grafana\\n\\n---\\n\\n**Access Points:**\\n- HAProxy: http://localhost\\n- Grafana: http://localhost:3000\\n- Prometheus: http://localhost:9090\\n- HAProxy Stats: http://localhost:8404/stats"
+        }
+      },
+      {
+        "id": 5,
+        "type": "graph",
+        "title": "Targets Up/Down",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6},
+        "targets": [
+          {
+            "expr": "up{service=\"trafficserver\"}",
+            "legendFormat": "{{instance}}",
+            "refId": "A"
+          },
+          {
+            "expr": "up{service=\"backend\"}",
+            "legendFormat": "{{instance}}",
+            "refId": "B"
+          },
+          {
+            "expr": "up{service=\"loadbalancer\"}",
+            "legendFormat": "{{instance}}",
+            "refId": "C"
+          }
+        ],
+        "yaxes": [
+          {
+            "label": "Status",
+            "min": 0,
+            "max": 1
+          },
+          {
+            "show": false
+          }
+        ],
+        "lines": true,
+        "fill": 0,
+        "linewidth": 2,
+        "pointradius": 2,
+        "points": false,
+        "legend": {
+          "show": true,
+          "alignAsTable": true,
+          "rightSide": false
+        }
+      },
+      {
+        "id": 6,
+        "type": "graph",
+        "title": "Scrape Duration",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 6},
+        "targets": [
+          {
+            "expr": "scrape_duration_seconds",
+            "legendFormat": "{{job}} - {{instance}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "label": "Duration (seconds)",
+            "format": "s"
+          },
+          {
+            "show": false
+          }
+        ],
+        "lines": true,
+        "fill": 1,
+        "linewidth": 1,
+        "legend": {
+          "show": true,
+          "alignAsTable": true,
+          "rightSide": false
+        }
+      },
+      {
+        "id": 7,
+        "type": "table",
+        "title": "Service Status Summary",
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 14},
+        "targets": [
+          {
+            "expr": "up",
+            "format": "table",
+            "instant": true,
+            "refId": "A"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "Time": true,
+                "__name__": true
+              },
+              "indexByName": {},
+              "renameByName": {
+                "instance": "Instance",
+                "job": "Job",
+                "service": "Service",
+                "Value": "Status"
+              }
+            }
+          }
+        ],
+        "options": {
+          "showHeader": true
+        },
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "align": "auto",
+              "displayMode": "auto"
+            },
+            "mappings": [
+              {"type": "value", "options": {"0": {"text": "DOWN", "color": "red"}}},
+              {"type": "value", "options": {"1": {"text": "UP", "color": "green"}}}
+            ]
+          },
+          "overrides": [
+            {
+              "matcher": {"id": "byName", "options": "Status"},
+              "properties": [
+                {
+                  "id": "custom.displayMode",
+                  "value": "color-background"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,53 @@
+groups:
+  - name: ats_cluster_alerts
+    interval: 30s
+    rules:
+      # Alert when ATS node is down
+      - alert: ATSNodeDown
+        expr: up{service="trafficserver"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "ATS node {{ $labels.instance }} is down"
+          description: "ATS node {{ $labels.instance }} has been down for more than 1 minute."
+
+      # Alert on low cache hit rate (placeholder - needs actual ATS metrics)
+      - alert: LowCacheHitRate
+        expr: rate(up{service="trafficserver"}[5m]) < 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low cache hit rate on {{ $labels.instance }}"
+          description: "Cache hit rate on {{ $labels.instance }} is below 50% for 5 minutes."
+
+      # Alert when origin server is down
+      - alert: OriginServerDown
+        expr: up{service="backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Origin server {{ $labels.instance }} is down"
+          description: "Origin server {{ $labels.instance }} has been down for more than 1 minute."
+
+      # Alert when HAProxy is down
+      - alert: LoadBalancerDown
+        expr: up{service="loadbalancer"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "HAProxy load balancer is down"
+          description: "HAProxy has been down for more than 30 seconds. All traffic is affected."
+
+      # Alert when Prometheus can't scrape targets
+      - alert: HighScrapeFailureRate
+        expr: rate(up[5m]) < 0.95
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High scrape failure rate for {{ $labels.job }}"
+          description: "Prometheus is failing to scrape {{ $labels.job }} more than 5% of the time."
