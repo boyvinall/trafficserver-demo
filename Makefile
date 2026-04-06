@@ -1,4 +1,4 @@
-.PHONY: help up down restart build logs ps stats test clean smoke-test cache-test load-test
+.PHONY: help up down restart build logs ps stats test clean smoke-test cache-test load-test test-logs lint
 
 # Default target
 .DEFAULT_GOAL := help
@@ -14,10 +14,10 @@ help:
 	@echo "$(BLUE)ATS Cluster Management$(NC)"
 	@echo ""
 	@echo "$(GREEN)Available targets:$(NC)"
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  $(YELLOW)%-15s$(NC) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ": "} /^## [a-zA-Z_-]+:/ {gsub(/^## /, ""); printf "  $(YELLOW)%-15s$(NC) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 ## up: Start the cluster
-up:
+up: build
 	@echo "$(BLUE)Starting ATS cluster...$(NC)"
 	docker compose up -d
 	@echo "$(GREEN)Cluster started!$(NC)"
@@ -30,7 +30,7 @@ up:
 ## down: Stop the cluster
 down:
 	@echo "$(BLUE)Stopping ATS cluster...$(NC)"
-	docker compose down
+	docker compose down -v
 	@echo "$(GREEN)Cluster stopped!$(NC)"
 
 ## restart: Restart the cluster
@@ -63,8 +63,16 @@ stats:
 	@echo "$(BLUE)Cluster Status:$(NC)"
 	@docker compose ps
 	@echo ""
-	@echo "$(BLUE)HAProxy Stats:$(NC)"
-	@curl -s http://localhost:8404/stats 2>/dev/null | grep -A 3 "ats-" || echo "HAProxy not responding"
+	@echo "$(BLUE)HAProxy Backend Stats:$(NC)"
+	@curl -s -u admin:admin 'http://localhost:8404/stats;csv' 2>/dev/null | \
+		awk -F',' 'BEGIN {printf "%-15s %-10s %-10s %-12s %-15s\n", "Server", "Status", "Sessions", "Bytes Out", "Health Check"} \
+		NR>1 && $$1 == "ats_cluster" && $$2 ~ /ats-/ { \
+			status = $$18; \
+			sessions = $$8; \
+			bytes = $$10; \
+			check = $$37 " (" $$38 ")"; \
+			printf "%-15s %-10s %-10s %-12s %-15s\n", $$2, status, sessions, bytes, check \
+		}' || echo "HAProxy not responding"
 	@echo ""
 	@echo "$(BLUE)Quick Links:$(NC)"
 	@echo "  Grafana: http://localhost:3000"
@@ -72,7 +80,7 @@ stats:
 	@echo "  HAProxy Stats: http://localhost:8404/stats"
 
 ## test: Run all tests
-test: smoke-test cache-test
+test: smoke-test cache-test test-logs
 	@echo "$(GREEN)All tests completed!$(NC)"
 
 ## smoke-test: Run smoke tests
@@ -89,6 +97,17 @@ cache-test:
 load-test:
 	@echo "$(BLUE)Running load test...$(NC)"
 	@bash tests/test-load.sh
+
+## test-logs: Check logs for warnings/errors
+test-logs:
+	@echo "$(BLUE)Checking logs for warnings/errors...$(NC)"
+	@bash tests/test-logs.sh
+
+## lint: Run shellcheck on all bash scripts
+lint:
+	@echo "$(BLUE)Running shellcheck on bash scripts...$(NC)"
+	@shellcheck tests/*.sh
+	@echo "$(GREEN)Shellcheck passed!$(NC)"
 
 ## clean: Stop cluster and remove all volumes
 clean:

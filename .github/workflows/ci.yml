@@ -20,7 +20,7 @@ jobs:
       - name: Lint test scripts
         run: |
           echo "Linting shell scripts..."
-          shellcheck tests/*.sh
+          make lint
 
       - name: Validate docker compose.yml
         run: |

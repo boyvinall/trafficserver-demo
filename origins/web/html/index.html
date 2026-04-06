@@ -165,10 +165,10 @@
             <div class="info-card" style="margin-top: 20px;">
                 <h3>Testing Consistent Hashing</h3>
                 <p>Run this command multiple times to see the same URL always hits the same ATS node:</p>
-                <p><code>curl -I http://localhost/page1 | grep Via</code></p>
+                <p><code>curl -sI http://localhost/page1 | grep x-backend-server</code></p>
                 <p>Try different URLs to see them distributed across different nodes:</p>
-                <p><code>curl -I http://localhost/page2 | grep Via</code></p>
-                <p><code>curl -I http://localhost/page3 | grep Via</code></p>
+                <p><code>curl -sI http://localhost/page2 | grep x-backend-server</code></p>
+                <p><code>curl -sI http://localhost/page3 | grep x-backend-server</code></p>
             </div>
         </div>
     </div>

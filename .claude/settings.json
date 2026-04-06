@@ -1,16 +1,23 @@
 {
   "permissions": {
     "allow": [
-      "Bash(docker compose:*)",
       "Bash(docker exec:*)",
+      "Bash(docker inspect:*)",
       "Bash(docker logs:*)",
+      "Bash(docker network:*)",
+      "Bash(docker restart:*)",
+      "Bash(docker run:*)",
+      "Bash(docker volume rm:*)",
+      "Bash(docker compose:*)",
+      "Bash(docker-compose:*)",
       "Bash(cat:*)",
       "Bash(curl:*)",
       "Bash(make:*)",
+      "Bash(shellcheck:*)",
+      "Bash(./tests/test-cache-hit-rate.sh:*)",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:hub.docker.com)",
-      "Bash(python3:*)",
-      "Bash(shellcheck:*)"
+      "WebFetch(domain:docs.trafficserver.apache.org)"
     ]
   }
 }

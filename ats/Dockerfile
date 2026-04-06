@@ -9,12 +9,18 @@ RUN apt-get update && \
 # Copy configuration files to correct path for official image
 COPY records.yaml /opt/etc/trafficserver/records.yaml
 COPY remap.config /opt/etc/trafficserver/remap.config
+COPY cache.config /opt/etc/trafficserver/cache.config
 COPY storage.config /opt/etc/trafficserver/storage.config
+COPY volume.config /opt/etc/trafficserver/volume.config
+COPY hosting.config /opt/etc/trafficserver/hosting.config
 COPY plugin.config /opt/etc/trafficserver/plugin.config
 COPY logging.yaml /opt/etc/trafficserver/logging.yaml
+COPY ip_allow.yaml /opt/etc/trafficserver/ip_allow.yaml
 
-# Create cache directory
-RUN mkdir -p /cache/trafficserver && chmod 755 /cache/trafficserver
+# Create cache directory with proper ownership for 'nobody' user
+RUN mkdir -p /cache/trafficserver && \
+    chown -R nobody:nogroup /cache/trafficserver && \
+    chmod 755 /cache/trafficserver
 
 # Expose ATS port
 EXPOSE 8080

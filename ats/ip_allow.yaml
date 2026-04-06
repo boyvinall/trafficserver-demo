@@ -1,0 +1,52 @@
+# YAML
+#
+# ip_allow.yaml - IP-based access control
+#
+# Allow PURGE requests from localhost and Docker networks for testing
+#
+# Rules are applied in the order listed starting from the top.
+
+ip_allow:
+  # Allow all methods from localhost
+  - apply: in
+    ip_addrs: 127.0.0.1
+    action: allow
+    methods: ALL
+
+  - apply: in
+    ip_addrs: ::1
+    action: allow
+    methods: ALL
+
+  # Allow PURGE from Docker frontend network (HAProxy access)
+  - apply: in
+    ip_addrs: 192.168.195.0/24
+    action: allow
+    methods:
+      - GET
+      - HEAD
+      - POST
+      - PUT
+      - DELETE
+      - PURGE
+      - OPTIONS
+      - CONNECT
+
+  # Deny destructive methods from other IPs
+  - apply: in
+    ip_addrs: 0/0
+    action: deny
+    methods:
+      - PURGE
+      - PUSH
+      - DELETE
+      - TRACE
+
+  - apply: in
+    ip_addrs: ::/0
+    action: deny
+    methods:
+      - PURGE
+      - PUSH
+      - DELETE
+      - TRACE

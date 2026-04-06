@@ -1,261 +1,1609 @@
 {
-  "dashboard": {
-    "title": "ATS Cluster Overview",
-    "uid": "ats-cluster",
-    "timezone": "browser",
-    "schemaVersion": 38,
-    "version": 1,
-    "refresh": "10s",
-    "time": {
-      "from": "now-30m",
-      "to": "now"
+  "title": "ATS Server Metrics",
+  "uid": "ats-cluster",
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 2,
+  "refresh": "10s",
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Overview",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0},
+      "collapsed": false
     },
-    "panels": [
-      {
-        "id": 1,
-        "type": "stat",
-        "title": "ATS Nodes Status",
-        "gridPos": {"h": 6, "w": 6, "x": 0, "y": 0},
-        "targets": [
-          {
-            "expr": "sum(up{service=\"trafficserver\"})",
-            "legendFormat": "Online Nodes",
-            "refId": "A"
-          }
-        ],
-        "options": {
-          "reduceOptions": {
-            "values": false,
-            "calcs": ["lastNotNull"]
-          },
-          "textMode": "value_and_name",
-          "colorMode": "value",
-          "graphMode": "none"
-        },
-        "fieldConfig": {
-          "defaults": {
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {"value": 0, "color": "red"},
-                {"value": 2, "color": "yellow"},
-                {"value": 3, "color": "green"}
-              ]
-            }
-          }
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Memory Usage (RSS)",
+      "gridPos": {"h": 4, "w": 4, "x": 0, "y": 1},
+      "targets": [
+        {
+          "expr": "proxy_process_traffic_server_memory_rss",
+          "refId": "A"
         }
-      },
-      {
-        "id": 2,
-        "type": "stat",
-        "title": "Origin Servers Status",
-        "gridPos": {"h": 6, "w": 6, "x": 6, "y": 0},
-        "targets": [
-          {
-            "expr": "sum(up{service=\"backend\"})",
-            "legendFormat": "Online Origins",
-            "refId": "A"
-          }
-        ],
-        "options": {
-          "reduceOptions": {
-            "values": false,
-            "calcs": ["lastNotNull"]
-          },
-          "textMode": "value_and_name",
-          "colorMode": "value",
-          "graphMode": "none"
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
         },
-        "fieldConfig": {
-          "defaults": {
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {"value": 0, "color": "red"},
-                {"value": 1, "color": "green"}
-              ]
-            }
-          }
-        }
+        "textMode": "value_and_name",
+        "colorMode": "value",
+        "graphMode": "area"
       },
-      {
-        "id": 3,
-        "type": "stat",
-        "title": "Load Balancer Status",
-        "gridPos": {"h": 6, "w": 6, "x": 12, "y": 0},
-        "targets": [
-          {
-            "expr": "up{service=\"loadbalancer\"}",
-            "legendFormat": "HAProxy",
-            "refId": "A"
-          }
-        ],
-        "options": {
-          "reduceOptions": {
-            "values": false,
-            "calcs": ["lastNotNull"]
-          },
-          "textMode": "value_and_name",
-          "colorMode": "value",
-          "graphMode": "none"
-        },
-        "fieldConfig": {
-          "defaults": {
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {"value": 0, "color": "red"},
-                {"value": 1, "color": "green"}
-              ]
-            },
-            "mappings": [
-              {"type": "value", "options": {"0": {"text": "DOWN"}}},
-              {"type": "value", "options": {"1": {"text": "UP"}}}
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": 0, "color": "green"},
+              {"value": 500000000, "color": "yellow"},
+              {"value": 1000000000, "color": "red"}
             ]
           }
-        }
-      },
-      {
-        "id": 4,
-        "type": "text",
-        "title": "Cluster Information",
-        "gridPos": {"h": 6, "w": 6, "x": 18, "y": 0},
-        "options": {
-          "mode": "markdown",
-          "content": "## ATS Cluster\\n\\n**Architecture:** 3-Node Cluster\\n\\n**Load Balancing:** Consistent Hashing\\n\\n**Monitoring:** Prometheus + Grafana\\n\\n---\\n\\n**Access Points:**\\n- HAProxy: http://localhost\\n- Grafana: http://localhost:3000\\n- Prometheus: http://localhost:9090\\n- HAProxy Stats: http://localhost:8404/stats"
-        }
-      },
-      {
-        "id": 5,
-        "type": "graph",
-        "title": "Targets Up/Down",
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6},
-        "targets": [
-          {
-            "expr": "up{service=\"trafficserver\"}",
-            "legendFormat": "{{instance}}",
-            "refId": "A"
-          },
-          {
-            "expr": "up{service=\"backend\"}",
-            "legendFormat": "{{instance}}",
-            "refId": "B"
-          },
-          {
-            "expr": "up{service=\"loadbalancer\"}",
-            "legendFormat": "{{instance}}",
-            "refId": "C"
-          }
-        ],
-        "yaxes": [
-          {
-            "label": "Status",
-            "min": 0,
-            "max": 1
-          },
-          {
-            "show": false
-          }
-        ],
-        "lines": true,
-        "fill": 0,
-        "linewidth": 2,
-        "pointradius": 2,
-        "points": false,
-        "legend": {
-          "show": true,
-          "alignAsTable": true,
-          "rightSide": false
-        }
-      },
-      {
-        "id": 6,
-        "type": "graph",
-        "title": "Scrape Duration",
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 6},
-        "targets": [
-          {
-            "expr": "scrape_duration_seconds",
-            "legendFormat": "{{job}} - {{instance}}",
-            "refId": "A"
-          }
-        ],
-        "yaxes": [
-          {
-            "label": "Duration (seconds)",
-            "format": "s"
-          },
-          {
-            "show": false
-          }
-        ],
-        "lines": true,
-        "fill": 1,
-        "linewidth": 1,
-        "legend": {
-          "show": true,
-          "alignAsTable": true,
-          "rightSide": false
-        }
-      },
-      {
-        "id": 7,
-        "type": "table",
-        "title": "Service Status Summary",
-        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 14},
-        "targets": [
-          {
-            "expr": "up",
-            "format": "table",
-            "instant": true,
-            "refId": "A"
-          }
-        ],
-        "transformations": [
-          {
-            "id": "organize",
-            "options": {
-              "excludeByName": {
-                "Time": true,
-                "__name__": true
-              },
-              "indexByName": {},
-              "renameByName": {
-                "instance": "Instance",
-                "job": "Job",
-                "service": "Service",
-                "Value": "Status"
-              }
-            }
-          }
-        ],
-        "options": {
-          "showHeader": true
-        },
-        "fieldConfig": {
-          "defaults": {
-            "custom": {
-              "align": "auto",
-              "displayMode": "auto"
-            },
-            "mappings": [
-              {"type": "value", "options": {"0": {"text": "DOWN", "color": "red"}}},
-              {"type": "value", "options": {"1": {"text": "UP", "color": "green"}}}
-            ]
-          },
-          "overrides": [
-            {
-              "matcher": {"id": "byName", "options": "Status"},
-              "properties": [
-                {
-                  "id": "custom.displayMode",
-                  "value": "color-background"
-                }
-              ]
-            }
-          ]
         }
       }
-    ]
-  }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Current Client Connections",
+      "gridPos": {"h": 4, "w": 4, "x": 4, "y": 1},
+      "targets": [
+        {
+          "expr": "proxy_process_http_current_client_connections",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        },
+        "textMode": "value_and_name",
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Current Server Connections",
+      "gridPos": {"h": 4, "w": 4, "x": 8, "y": 1},
+      "targets": [
+        {
+          "expr": "proxy_process_http_current_server_connections",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        },
+        "textMode": "value_and_name",
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Active Transactions",
+      "gridPos": {"h": 4, "w": 4, "x": 12, "y": 1},
+      "targets": [
+        {
+          "expr": "proxy_process_http_current_client_transactions",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        },
+        "textMode": "value_and_name",
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Cache Hit Rate",
+      "gridPos": {"h": 4, "w": 6, "x": 16, "y": 1},
+      "targets": [
+        {
+          "expr": "100 * proxy_process_cache_total_hits / (proxy_process_cache_total_hits + proxy_process_cache_total_misses)",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        },
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": 0, "color": "red"},
+              {"value": 30, "color": "yellow"},
+              {"value": 60, "color": "green"}
+            ]
+          },
+          "decimals": 1
+        }
+      }
+    },
+    {
+      "id": 10,
+      "type": "row",
+      "title": "HTTP Traffic & Performance",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 5},
+      "collapsed": false
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Request Rate",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6},
+      "targets": [
+        {
+          "expr": "rate(proxy_process_http_incoming_requests[1m])",
+          "legendFormat": "Incoming",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(proxy_process_http_completed_requests[1m])",
+          "legendFormat": "Completed",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(proxy_process_http_outgoing_requests[1m])",
+          "legendFormat": "Outgoing",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        }
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["lastNotNull", "mean", "max"]
+        }
+      }
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Bandwidth",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 6},
+      "targets": [
+        {
+          "expr": "rate(proxy_process_user_agent_total_bytes[1m])",
+          "legendFormat": "User Agent",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(proxy_process_origin_server_total_bytes[1m])",
+          "legendFormat": "Origin Server",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        }
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["lastNotNull", "mean", "max"]
+        }
+      }
+    },
+    {
+      "id": 13,
+      "type": "bargauge",
+      "title": "Response Status Codes",
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 14},
+      "targets": [
+        {
+          "expr": "proxy_process_http_2xx_responses",
+          "legendFormat": "2xx Success",
+          "refId": "A"
+        },
+        {
+          "expr": "proxy_process_http_3xx_responses",
+          "legendFormat": "3xx Redirect",
+          "refId": "B"
+        },
+        {
+          "expr": "proxy_process_http_4xx_responses",
+          "legendFormat": "4xx Client Error",
+          "refId": "C"
+        },
+        {
+          "expr": "proxy_process_http_5xx_responses",
+          "legendFormat": "5xx Server Error",
+          "refId": "D"
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": 0, "color": "green"}
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "4xx Client Error"},
+            "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "yellow"}}]
+          },
+          {
+            "matcher": {"id": "byName", "options": "5xx Server Error"},
+            "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "red"}}]
+          }
+        ]
+      }
+    },
+    {
+      "id": 14,
+      "type": "timeseries",
+      "title": "HTTP Method Distribution",
+      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 14},
+      "targets": [
+        {
+          "expr": "rate(proxy_process_http_get_requests[1m])",
+          "legendFormat": "GET",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(proxy_process_http_post_requests[1m])",
+          "legendFormat": "POST",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(proxy_process_http_head_requests[1m])",
+          "legendFormat": "HEAD",
+          "refId": "C"
+        },
+        {
+          "expr": "rate(proxy_process_http_put_requests[1m])",
+          "legendFormat": "PUT",
+          "refId": "D"
+        },
+        {
+          "expr": "rate(proxy_process_http_delete_requests[1m])",
+          "legendFormat": "DELETE",
+          "refId": "E"
+        },
+        {
+          "expr": "rate(proxy_process_http_connect_requests[1m])",
+          "legendFormat": "CONNECT",
+          "refId": "F"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "stacking": {"mode": "normal"}
+          }
+        }
+      }
+    },
+    {
+      "id": 15,
+      "type": "timeseries",
+      "title": "Transaction Time",
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 14},
+      "targets": [
+        {
+          "expr": "rate(proxy_process_http_total_transactions_time[1m]) / rate(proxy_process_http_completed_requests[1m]) / 1000",
+          "legendFormat": "Avg Transaction Time",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 20
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": 0, "color": "green"},
+              {"value": 100, "color": "yellow"},
+              {"value": 500, "color": "red"}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 20,
+      "type": "row",
+      "title": "Cache Performance",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 22},
+      "collapsed": false
+    },
+    {
+      "id": 21,
+      "type": "timeseries",
+      "title": "Cache Operations Rate",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 23},
+      "targets": [
+        {
+          "expr": "rate(proxy_process_http_cache_hit_fresh[1m])",
+          "legendFormat": "Hit Fresh",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(proxy_process_http_cache_hit_mem_fresh[1m])",
+          "legendFormat": "Hit Memory Fresh",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(proxy_process_http_cache_hit_revalidated[1m])",
+          "legendFormat": "Hit Revalidated",
+          "refId": "C"
+        },
+        {
+          "expr": "rate(proxy_process_http_cache_miss_cold[1m])",
+          "legendFormat": "Miss Cold",
+          "refId": "D"
+        },
+        {
+          "expr": "rate(proxy_process_http_cache_miss_changed[1m])",
+          "legendFormat": "Miss Changed",
+          "refId": "E"
+        },
+        {
+          "expr": "rate(proxy_process_http_cache_miss_client_not_cacheable[1m])",
+          "legendFormat": "Miss Not Cacheable",
+          "refId": "F"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        }
+      }
+    },
+    {
+      "id": 22,
+      "type": "stat",
+      "title": "Cache Storage",
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 23},
+      "targets": [
+        {
+          "expr": "proxy_process_cache_bytes_used",
+          "legendFormat": "Used",
+          "refId": "A"
+        },
+        {
+          "expr": "proxy_process_cache_bytes_total",
+          "legendFormat": "Total",
+          "refId": "B"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        },
+        "textMode": "value_and_name",
+        "colorMode": "value",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        }
+      }
+    },
+    {
+      "id": 23,
+      "type": "gauge",
+      "title": "Cache Utilization",
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 23},
+      "targets": [
+        {
+          "expr": "100 * proxy_process_cache_bytes_used / proxy_process_cache_bytes_total",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": 0, "color": "green"},
+              {"value": 70, "color": "yellow"},
+              {"value": 90, "color": "red"}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 24,
+      "type": "stat",
+      "title": "RAM Cache",
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 27},
+      "targets": [
+        {
+          "expr": "proxy_process_cache_ram_cache_bytes_used",
+          "legendFormat": "RAM Used",
+          "refId": "A"
+        },
+        {
+          "expr": "proxy_process_cache_ram_cache_total_bytes",
+          "legendFormat": "RAM Total",
+          "refId": "B"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        },
+        "textMode": "value_and_name",
+        "colorMode": "value",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        }
+      }
+    },
+    {
+      "id": 25,
+      "type": "timeseries",
+      "title": "RAM Cache Hit Rate",
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 27},
+      "targets": [
+        {
+          "expr": "rate(proxy_process_cache_ram_cache_hits[1m])",
+          "legendFormat": "Hits",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(proxy_process_cache_ram_cache_misses[1m])",
+          "legendFormat": "Misses",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        }
+      }
+    },
+    {
+      "id": 26,
+      "type": "timeseries",
+      "title": "Cache I/O",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 31},
+      "targets": [
+        {
+          "expr": "rate(proxy_process_cache_aio_KB_read[1m]) * 1024",
+          "legendFormat": "Read",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(proxy_process_cache_aio_KB_write[1m]) * 1024",
+          "legendFormat": "Write",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        }
+      }
+    },
+    {
+      "id": 27,
+      "type": "timeseries",
+      "title": "Cache Operations",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 31},
+      "targets": [
+        {
+          "expr": "rate(proxy_process_cache_read_success[1m])",
+          "legendFormat": "Read Success",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(proxy_process_cache_write_success[1m])",
+          "legendFormat": "Write Success",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(proxy_process_cache_update_success[1m])",
+          "legendFormat": "Update Success",
+          "refId": "C"
+        },
+        {
+          "expr": "rate(proxy_process_cache_read_failure[1m])",
+          "legendFormat": "Read Failure",
+          "refId": "D"
+        },
+        {
+          "expr": "rate(proxy_process_cache_write_failure[1m])",
+          "legendFormat": "Write Failure",
+          "refId": "E"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        }
+      }
+    },
+    {
+      "id": 30,
+      "type": "row",
+      "title": "Connections & Network",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 39},
+      "collapsed": false
+    },
+    {
+      "id": 31,
+      "type": "timeseries",
+      "title": "Client Connections",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 40},
+      "targets": [
+        {
+          "expr": "proxy_process_http_current_client_connections",
+          "legendFormat": "Current",
+          "refId": "A"
+        },
+        {
+          "expr": "proxy_process_http_current_active_client_connections",
+          "legendFormat": "Active",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(proxy_process_http_total_client_connections[1m])",
+          "legendFormat": "New Rate",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        }
+      }
+    },
+    {
+      "id": 32,
+      "type": "timeseries",
+      "title": "Server Connections",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 40},
+      "targets": [
+        {
+          "expr": "proxy_process_http_current_server_connections",
+          "legendFormat": "Current",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(proxy_process_http_total_server_connections[1m])",
+          "legendFormat": "New Rate",
+          "refId": "B"
+        },
+        {
+          "expr": "proxy_process_http_pooled_server_connections",
+          "legendFormat": "Pooled",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        }
+      }
+    },
+    {
+      "id": 33,
+      "type": "stat",
+      "title": "Connection Protocol Distribution",
+      "gridPos": {"h": 6, "w": 8, "x": 0, "y": 48},
+      "targets": [
+        {
+          "expr": "proxy_process_http_total_client_connections_ipv4",
+          "legendFormat": "IPv4",
+          "refId": "A"
+        },
+        {
+          "expr": "proxy_process_http_total_client_connections_ipv6",
+          "legendFormat": "IPv6",
+          "refId": "B"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        },
+        "textMode": "value_and_name",
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      }
+    },
+    {
+      "id": 34,
+      "type": "timeseries",
+      "title": "Network I/O Operations",
+      "gridPos": {"h": 6, "w": 8, "x": 8, "y": 48},
+      "targets": [
+        {
+          "expr": "rate(proxy_process_net_calls_to_read[1m])",
+          "legendFormat": "Read Calls",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(proxy_process_net_calls_to_write[1m])",
+          "legendFormat": "Write Calls",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(proxy_process_net_calls_to_read_nodata[1m])",
+          "legendFormat": "Read No Data",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        }
+      }
+    },
+    {
+      "id": 35,
+      "type": "timeseries",
+      "title": "Network Throughput",
+      "gridPos": {"h": 6, "w": 8, "x": 16, "y": 48},
+      "targets": [
+        {
+          "expr": "rate(proxy_process_net_read_bytes[1m])",
+          "legendFormat": "Read",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(proxy_process_net_write_bytes[1m])",
+          "legendFormat": "Write",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        }
+      }
+    },
+    {
+      "id": 40,
+      "type": "row",
+      "title": "Event Loop Performance",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 54},
+      "collapsed": false
+    },
+    {
+      "id": 41,
+      "type": "timeseries",
+      "title": "Event Loop Count (10s window)",
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 55},
+      "targets": [
+        {
+          "expr": "rate(proxy_process_eventloop_count_10s[1m])",
+          "legendFormat": "Loop Count",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(proxy_process_eventloop_events_10s[1m])",
+          "legendFormat": "Events",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        }
+      }
+    },
+    {
+      "id": 42,
+      "type": "stat",
+      "title": "Event Loop Stats (10s)",
+      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 55},
+      "targets": [
+        {
+          "expr": "proxy_process_eventloop_events_min_10s",
+          "legendFormat": "Events Min",
+          "refId": "A"
+        },
+        {
+          "expr": "proxy_process_eventloop_events_max_10s",
+          "legendFormat": "Events Max",
+          "refId": "B"
+        },
+        {
+          "expr": "proxy_process_eventloop_time_min_10s / 1000",
+          "legendFormat": "Time Min (ms)",
+          "refId": "C"
+        },
+        {
+          "expr": "proxy_process_eventloop_time_max_10s / 1000",
+          "legendFormat": "Time Max (ms)",
+          "refId": "D"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        },
+        "textMode": "value_and_name",
+        "colorMode": "value",
+        "graphMode": "none",
+        "orientation": "vertical"
+      }
+    },
+    {
+      "id": 43,
+      "type": "stat",
+      "title": "Max Wait Times (10s)",
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 55},
+      "targets": [
+        {
+          "expr": "proxy_process_eventloop_drain_queue_max_10s / 1000",
+          "legendFormat": "Drain Queue (ms)",
+          "refId": "A"
+        },
+        {
+          "expr": "proxy_process_eventloop_io_wait_max_10s / 1000",
+          "legendFormat": "I/O Wait (ms)",
+          "refId": "B"
+        },
+        {
+          "expr": "proxy_process_eventloop_io_work_max_10s / 1000",
+          "legendFormat": "I/O Work (ms)",
+          "refId": "C"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        },
+        "textMode": "value_and_name",
+        "colorMode": "value",
+        "graphMode": "none",
+        "orientation": "vertical"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": 0, "color": "green"},
+              {"value": 100, "color": "yellow"},
+              {"value": 1000, "color": "red"}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 44,
+      "type": "bargauge",
+      "title": "Event Loop Time Distribution",
+      "gridPos": {"h": 10, "w": 24, "x": 0, "y": 63},
+      "targets": [
+        {
+          "expr": "proxy_process_eventloop_time_0ms",
+          "legendFormat": "0-5ms",
+          "refId": "A"
+        },
+        {
+          "expr": "proxy_process_eventloop_time_5ms",
+          "legendFormat": "5-10ms",
+          "refId": "B"
+        },
+        {
+          "expr": "proxy_process_eventloop_time_10ms",
+          "legendFormat": "10-15ms",
+          "refId": "C"
+        },
+        {
+          "expr": "proxy_process_eventloop_time_15ms",
+          "legendFormat": "15-20ms",
+          "refId": "D"
+        },
+        {
+          "expr": "proxy_process_eventloop_time_20ms",
+          "legendFormat": "20-25ms",
+          "refId": "E"
+        },
+        {
+          "expr": "proxy_process_eventloop_time_25ms",
+          "legendFormat": "25-30ms",
+          "refId": "F"
+        },
+        {
+          "expr": "proxy_process_eventloop_time_50ms",
+          "legendFormat": "50-60ms",
+          "refId": "G"
+        },
+        {
+          "expr": "proxy_process_eventloop_time_100ms",
+          "legendFormat": "100-120ms",
+          "refId": "H"
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      }
+    },
+    {
+      "id": 50,
+      "type": "row",
+      "title": "DNS & HostDB",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 73},
+      "collapsed": false
+    },
+    {
+      "id": 51,
+      "type": "stat",
+      "title": "DNS Lookups",
+      "gridPos": {"h": 6, "w": 6, "x": 0, "y": 74},
+      "targets": [
+        {
+          "expr": "proxy_process_dns_total_dns_lookups",
+          "legendFormat": "Total",
+          "refId": "A"
+        },
+        {
+          "expr": "proxy_process_dns_lookup_successes",
+          "legendFormat": "Successes",
+          "refId": "B"
+        },
+        {
+          "expr": "proxy_process_dns_lookup_failures",
+          "legendFormat": "Failures",
+          "refId": "C"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        },
+        "textMode": "value_and_name",
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 52,
+      "type": "timeseries",
+      "title": "DNS Operations",
+      "gridPos": {"h": 6, "w": 9, "x": 6, "y": 74},
+      "targets": [
+        {
+          "expr": "rate(proxy_process_dns_lookup_successes[1m])",
+          "legendFormat": "Success Rate",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(proxy_process_dns_lookup_failures[1m])",
+          "legendFormat": "Failure Rate",
+          "refId": "B"
+        },
+        {
+          "expr": "proxy_process_dns_in_flight",
+          "legendFormat": "In Flight",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        }
+      }
+    },
+    {
+      "id": 53,
+      "type": "stat",
+      "title": "HostDB Cache",
+      "gridPos": {"h": 6, "w": 9, "x": 15, "y": 74},
+      "targets": [
+        {
+          "expr": "proxy_process_hostdb_cache_current_items",
+          "legendFormat": "Items",
+          "refId": "A"
+        },
+        {
+          "expr": "proxy_process_hostdb_cache_current_size",
+          "legendFormat": "Size",
+          "refId": "B"
+        },
+        {
+          "expr": "100 * proxy_process_hostdb_total_hits / proxy_process_hostdb_total_lookups",
+          "legendFormat": "Hit Rate %",
+          "refId": "C"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        },
+        "textMode": "value_and_name",
+        "colorMode": "value",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 1
+        }
+      }
+    },
+    {
+      "id": 60,
+      "type": "row",
+      "title": "Origin Server Metrics",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 80},
+      "collapsed": false
+    },
+    {
+      "id": 61,
+      "type": "timeseries",
+      "title": "Origin Request/Response Sizes",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 81},
+      "targets": [
+        {
+          "expr": "rate(proxy_process_http_origin_server_request_header_total_size[1m])",
+          "legendFormat": "Request Headers",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(proxy_process_http_origin_server_request_document_total_size[1m])",
+          "legendFormat": "Request Body",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(proxy_process_http_origin_server_response_header_total_size[1m])",
+          "legendFormat": "Response Headers",
+          "refId": "C"
+        },
+        {
+          "expr": "rate(proxy_process_http_origin_server_response_document_total_size[1m])",
+          "legendFormat": "Response Body",
+          "refId": "D"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        }
+      }
+    },
+    {
+      "id": 62,
+      "type": "bargauge",
+      "title": "Origin Connection Events",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 81},
+      "targets": [
+        {
+          "expr": "proxy_process_http_origin_reuse",
+          "legendFormat": "Reuse",
+          "refId": "A"
+        },
+        {
+          "expr": "proxy_process_http_origin_reuse_fail",
+          "legendFormat": "Reuse Fail",
+          "refId": "B"
+        },
+        {
+          "expr": "proxy_process_http_origin_not_found",
+          "legendFormat": "Not Found",
+          "refId": "C"
+        },
+        {
+          "expr": "proxy_process_http_origin_close_private",
+          "legendFormat": "Close Private",
+          "refId": "D"
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true
+      }
+    },
+    {
+      "id": 63,
+      "type": "bargauge",
+      "title": "Origin Shutdown Reasons",
+      "gridPos": {"h": 10, "w": 24, "x": 0, "y": 89},
+      "targets": [
+        {
+          "expr": "proxy_process_http_origin_shutdown_tunnel_server",
+          "legendFormat": "Tunnel Server",
+          "refId": "A"
+        },
+        {
+          "expr": "proxy_process_http_origin_shutdown_tunnel_server_no_keep_alive",
+          "legendFormat": "No Keep-Alive",
+          "refId": "B"
+        },
+        {
+          "expr": "proxy_process_http_origin_shutdown_release_no_keep_alive",
+          "legendFormat": "Release No Keep-Alive",
+          "refId": "C"
+        },
+        {
+          "expr": "proxy_process_http_origin_shutdown_tunnel_client",
+          "legendFormat": "Tunnel Client",
+          "refId": "D"
+        },
+        {
+          "expr": "proxy_process_http_origin_shutdown_release_misc",
+          "legendFormat": "Release Misc",
+          "refId": "E"
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true
+      }
+    },
+    {
+      "id": 70,
+      "type": "row",
+      "title": "Transfer Speed Distribution",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 99},
+      "collapsed": false
+    },
+    {
+      "id": 71,
+      "type": "bargauge",
+      "title": "User Agent Speed (Bytes/sec)",
+      "gridPos": {"h": 10, "w": 12, "x": 0, "y": 100},
+      "targets": [
+        {
+          "expr": "proxy_process_http_user_agent_speed_bytes_per_sec_100",
+          "legendFormat": "< 100",
+          "refId": "A"
+        },
+        {
+          "expr": "proxy_process_http_user_agent_speed_bytes_per_sec_1K",
+          "legendFormat": "< 1K",
+          "refId": "B"
+        },
+        {
+          "expr": "proxy_process_http_user_agent_speed_bytes_per_sec_10K",
+          "legendFormat": "< 10K",
+          "refId": "C"
+        },
+        {
+          "expr": "proxy_process_http_user_agent_speed_bytes_per_sec_100K",
+          "legendFormat": "< 100K",
+          "refId": "D"
+        },
+        {
+          "expr": "proxy_process_http_user_agent_speed_bytes_per_sec_1M",
+          "legendFormat": "< 1M",
+          "refId": "E"
+        },
+        {
+          "expr": "proxy_process_http_user_agent_speed_bytes_per_sec_10M",
+          "legendFormat": "< 10M",
+          "refId": "F"
+        },
+        {
+          "expr": "proxy_process_http_user_agent_speed_bytes_per_sec_100M",
+          "legendFormat": "< 100M",
+          "refId": "G"
+        },
+        {
+          "expr": "proxy_process_http_user_agent_speed_bytes_per_sec_200M",
+          "legendFormat": "< 200M",
+          "refId": "H"
+        },
+        {
+          "expr": "proxy_process_http_user_agent_speed_bytes_per_sec_400M",
+          "legendFormat": "< 400M",
+          "refId": "I"
+        },
+        {
+          "expr": "proxy_process_http_user_agent_speed_bytes_per_sec_800M",
+          "legendFormat": "< 800M",
+          "refId": "J"
+        },
+        {
+          "expr": "proxy_process_http_user_agent_speed_bytes_per_sec_1G",
+          "legendFormat": "> 1G",
+          "refId": "K"
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true
+      }
+    },
+    {
+      "id": 72,
+      "type": "bargauge",
+      "title": "Origin Server Speed (Bytes/sec)",
+      "gridPos": {"h": 10, "w": 12, "x": 12, "y": 100},
+      "targets": [
+        {
+          "expr": "proxy_process_http_origin_server_speed_bytes_per_sec_100",
+          "legendFormat": "< 100",
+          "refId": "A"
+        },
+        {
+          "expr": "proxy_process_http_origin_server_speed_bytes_per_sec_1K",
+          "legendFormat": "< 1K",
+          "refId": "B"
+        },
+        {
+          "expr": "proxy_process_http_origin_server_speed_bytes_per_sec_10K",
+          "legendFormat": "< 10K",
+          "refId": "C"
+        },
+        {
+          "expr": "proxy_process_http_origin_server_speed_bytes_per_sec_100K",
+          "legendFormat": "< 100K",
+          "refId": "D"
+        },
+        {
+          "expr": "proxy_process_http_origin_server_speed_bytes_per_sec_1M",
+          "legendFormat": "< 1M",
+          "refId": "E"
+        },
+        {
+          "expr": "proxy_process_http_origin_server_speed_bytes_per_sec_10M",
+          "legendFormat": "< 10M",
+          "refId": "F"
+        },
+        {
+          "expr": "proxy_process_http_origin_server_speed_bytes_per_sec_100M",
+          "legendFormat": "< 100M",
+          "refId": "G"
+        },
+        {
+          "expr": "proxy_process_http_origin_server_speed_bytes_per_sec_200M",
+          "legendFormat": "< 200M",
+          "refId": "H"
+        },
+        {
+          "expr": "proxy_process_http_origin_server_speed_bytes_per_sec_400M",
+          "legendFormat": "< 400M",
+          "refId": "I"
+        },
+        {
+          "expr": "proxy_process_http_origin_server_speed_bytes_per_sec_800M",
+          "legendFormat": "< 800M",
+          "refId": "J"
+        },
+        {
+          "expr": "proxy_process_http_origin_server_speed_bytes_per_sec_1G",
+          "legendFormat": "> 1G",
+          "refId": "K"
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true
+      }
+    },
+    {
+      "id": 80,
+      "type": "row",
+      "title": "Transaction Details",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 110},
+      "collapsed": false
+    },
+    {
+      "id": 81,
+      "type": "bargauge",
+      "title": "Transaction Counts by Type",
+      "gridPos": {"h": 10, "w": 12, "x": 0, "y": 111},
+      "targets": [
+        {
+          "expr": "proxy_process_http_transaction_counts_hit_fresh",
+          "legendFormat": "Hit Fresh",
+          "refId": "A"
+        },
+        {
+          "expr": "proxy_process_http_transaction_counts_miss_changed",
+          "legendFormat": "Miss Changed",
+          "refId": "B"
+        },
+        {
+          "expr": "proxy_process_http_transaction_counts_miss_not_cacheable",
+          "legendFormat": "Miss Not Cacheable",
+          "refId": "C"
+        },
+        {
+          "expr": "proxy_process_http_transaction_counts_errors_aborts",
+          "legendFormat": "Aborts",
+          "refId": "D"
+        },
+        {
+          "expr": "proxy_process_http_transaction_counts_errors_connect_failed",
+          "legendFormat": "Connect Failed",
+          "refId": "E"
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": 0, "color": "green"}
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "Aborts"},
+            "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "red"}}]
+          },
+          {
+            "matcher": {"id": "byName", "options": "Connect Failed"},
+            "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "red"}}]
+          }
+        ]
+      }
+    },
+    {
+      "id": 82,
+      "type": "timeseries",
+      "title": "TCP Transaction Types Rate",
+      "gridPos": {"h": 10, "w": 12, "x": 12, "y": 111},
+      "targets": [
+        {
+          "expr": "rate(proxy_process_http_tcp_hit_count[1m])",
+          "legendFormat": "TCP Hit",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(proxy_process_http_tcp_miss_count[1m])",
+          "legendFormat": "TCP Miss",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(proxy_process_http_tcp_refresh_miss_count[1m])",
+          "legendFormat": "TCP Refresh Miss",
+          "refId": "C"
+        },
+        {
+          "expr": "rate(proxy_process_http_tcp_ims_hit_count[1m])",
+          "legendFormat": "TCP IMS Hit",
+          "refId": "D"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "stacking": {"mode": "normal"}
+          }
+        }
+      }
+    },
+    {
+      "id": 90,
+      "type": "row",
+      "title": "Error Tracking",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 121},
+      "collapsed": false
+    },
+    {
+      "id": 91,
+      "type": "stat",
+      "title": "Client Errors",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 122},
+      "targets": [
+        {
+          "expr": "proxy_process_http_err_client_abort_count",
+          "legendFormat": "Client Aborts",
+          "refId": "A"
+        },
+        {
+          "expr": "proxy_process_http_err_client_read_error_count",
+          "legendFormat": "Read Errors",
+          "refId": "B"
+        },
+        {
+          "expr": "proxy_process_http_invalid_client_requests",
+          "legendFormat": "Invalid Requests",
+          "refId": "C"
+        },
+        {
+          "expr": "proxy_process_http_missing_host_hdr",
+          "legendFormat": "Missing Host Header",
+          "refId": "D"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        },
+        "textMode": "value_and_name",
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": 0, "color": "green"},
+              {"value": 1, "color": "yellow"},
+              {"value": 10, "color": "red"}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 92,
+      "type": "stat",
+      "title": "Server Errors",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 122},
+      "targets": [
+        {
+          "expr": "proxy_process_http_err_connect_fail_count",
+          "legendFormat": "Connect Failures",
+          "refId": "A"
+        },
+        {
+          "expr": "proxy_process_http_broken_server_connections",
+          "legendFormat": "Broken Connections",
+          "refId": "B"
+        },
+        {
+          "expr": "proxy_process_http_down_server_no_requests",
+          "legendFormat": "Down Servers",
+          "refId": "C"
+        },
+        {
+          "expr": "proxy_process_cache_read_errors",
+          "legendFormat": "Cache Read Errors",
+          "refId": "D"
+        },
+        {
+          "expr": "proxy_process_cache_write_errors",
+          "legendFormat": "Cache Write Errors",
+          "refId": "E"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        },
+        "textMode": "value_and_name",
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": 0, "color": "green"},
+              {"value": 1, "color": "yellow"},
+              {"value": 10, "color": "red"}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 100,
+      "type": "row",
+      "title": "Logging Metrics",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 130},
+      "collapsed": false
+    },
+    {
+      "id": 101,
+      "type": "stat",
+      "title": "Log Events",
+      "gridPos": {"h": 6, "w": 12, "x": 0, "y": 131},
+      "targets": [
+        {
+          "expr": "proxy_process_log_event_log_access_ok",
+          "legendFormat": "Access OK",
+          "refId": "A"
+        },
+        {
+          "expr": "proxy_process_log_event_log_access_skip",
+          "legendFormat": "Access Skip",
+          "refId": "B"
+        },
+        {
+          "expr": "proxy_process_log_event_log_access_fail",
+          "legendFormat": "Access Fail",
+          "refId": "C"
+        },
+        {
+          "expr": "proxy_process_log_event_log_error_ok",
+          "legendFormat": "Error OK",
+          "refId": "D"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        },
+        "textMode": "value_and_name",
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 102,
+      "type": "stat",
+      "title": "Log Storage",
+      "gridPos": {"h": 6, "w": 12, "x": 12, "y": 131},
+      "targets": [
+        {
+          "expr": "proxy_process_log_log_files_open",
+          "legendFormat": "Files Open",
+          "refId": "A"
+        },
+        {
+          "expr": "proxy_process_log_log_files_space_used",
+          "legendFormat": "Space Used",
+          "refId": "B"
+        },
+        {
+          "expr": "proxy_process_log_bytes_written_to_disk",
+          "legendFormat": "Bytes Written",
+          "refId": "C"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        },
+        "textMode": "value_and_name",
+        "colorMode": "value",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        }
+      }
+    }
+  ]
 }

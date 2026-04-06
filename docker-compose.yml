@@ -36,11 +36,11 @@ services:
     hostname: ats-1
     volumes:
       - ats-cache-1:/cache/trafficserver
-      - ./ats/records.yaml:/etc/trafficserver/records.yaml:ro
-      - ./ats/remap.config:/etc/trafficserver/remap.config:ro
-      - ./ats/storage.config:/etc/trafficserver/storage.config:ro
-      - ./ats/plugin.config:/etc/trafficserver/plugin.config:ro
-      - ./ats/logging.yaml:/etc/trafficserver/logging.yaml:ro
+      - ./ats/records.yaml:/opt/etc/trafficserver/records.yaml:ro
+      - ./ats/remap.config:/opt/etc/trafficserver/remap.config:ro
+      - ./ats/storage.config:/opt/etc/trafficserver/storage.config:ro
+      - ./ats/plugin.config:/opt/etc/trafficserver/plugin.config:ro
+      - ./ats/logging.yaml:/opt/etc/trafficserver/logging.yaml:ro
     environment:
       - TS_NODE_ID=1
     networks:
@@ -63,11 +63,11 @@ services:
     hostname: ats-2
     volumes:
       - ats-cache-2:/cache/trafficserver
-      - ./ats/records.yaml:/etc/trafficserver/records.yaml:ro
-      - ./ats/remap.config:/etc/trafficserver/remap.config:ro
-      - ./ats/storage.config:/etc/trafficserver/storage.config:ro
-      - ./ats/plugin.config:/etc/trafficserver/plugin.config:ro
-      - ./ats/logging.yaml:/etc/trafficserver/logging.yaml:ro
+      - ./ats/records.yaml:/opt/etc/trafficserver/records.yaml:ro
+      - ./ats/remap.config:/opt/etc/trafficserver/remap.config:ro
+      - ./ats/storage.config:/opt/etc/trafficserver/storage.config:ro
+      - ./ats/plugin.config:/opt/etc/trafficserver/plugin.config:ro
+      - ./ats/logging.yaml:/opt/etc/trafficserver/logging.yaml:ro
     environment:
       - TS_NODE_ID=2
     networks:
@@ -90,11 +90,11 @@ services:
     hostname: ats-3
     volumes:
       - ats-cache-3:/cache/trafficserver
-      - ./ats/records.yaml:/etc/trafficserver/records.yaml:ro
-      - ./ats/remap.config:/etc/trafficserver/remap.config:ro
-      - ./ats/storage.config:/etc/trafficserver/storage.config:ro
-      - ./ats/plugin.config:/etc/trafficserver/plugin.config:ro
-      - ./ats/logging.yaml:/etc/trafficserver/logging.yaml:ro
+      - ./ats/records.yaml:/opt/etc/trafficserver/records.yaml:ro
+      - ./ats/remap.config:/opt/etc/trafficserver/remap.config:ro
+      - ./ats/storage.config:/opt/etc/trafficserver/storage.config:ro
+      - ./ats/plugin.config:/opt/etc/trafficserver/plugin.config:ro
+      - ./ats/logging.yaml:/opt/etc/trafficserver/logging.yaml:ro
     environment:
       - TS_NODE_ID=3
     networks:
@@ -118,6 +118,8 @@ services:
       dockerfile: Dockerfile
     container_name: ats-origin-web
     hostname: origin-web
+    ports:
+      - "9001:9001"
     networks:
       - backend
       - monitoring
@@ -134,6 +136,8 @@ services:
       dockerfile: Dockerfile
     container_name: ats-origin-api
     hostname: origin-api
+    ports:
+      - "9002:9002"
     networks:
       - backend
       - monitoring
@@ -150,6 +154,8 @@ services:
       dockerfile: Dockerfile
     container_name: ats-origin-static
     hostname: origin-static
+    ports:
+      - "9003:9003"
     networks:
       - backend
       - monitoring

@@ -1,6 +1,6 @@
 #!/bin/bash
 # Load test for ATS cluster
-# Generates traffic to observe cache behavior
+# Generates traffic to observe cache behavior using Vegeta
 
 set -e
 
@@ -13,8 +13,9 @@ echo -e "${BLUE}=== ATS Cluster Load Test ===${NC}"
 echo ""
 
 # Configuration
-REQUESTS=100
-CONCURRENCY=10
+RATE=10              # requests per second
+DURATION=10s         # test duration
+WORKERS=10           # concurrent workers
 URLS=(
     "/"
     "/page1"
@@ -27,49 +28,31 @@ URLS=(
 )
 
 echo -e "${YELLOW}Configuration:${NC}"
-echo "  Total requests: $REQUESTS"
-echo "  Concurrency: $CONCURRENCY"
+echo "  Rate: $RATE req/s"
+echo "  Duration: $DURATION"
+echo "  Workers: $WORKERS"
 echo "  URLs: ${#URLS[@]}"
 echo ""
 
-# Check if ab (Apache Bench) is available
-if ! command -v ab &> /dev/null; then
-    echo -e "${YELLOW}Apache Bench (ab) not found. Using curl instead.${NC}"
+# Generate targets file for Vegeta
+TARGETS_FILE=$(mktemp)
+trap 'rm -f "$TARGETS_FILE"' EXIT
 
-    echo -e "${BLUE}Sending requests...${NC}"
-    for ((i=1; i<=REQUESTS; i++)); do
-        # Pick a random URL
-        URL=${URLS[$RANDOM % ${#URLS[@]}]}
+for URL in "${URLS[@]}"; do
+    echo "GET http://host.docker.internal$URL" >> "$TARGETS_FILE"
+done
 
-        # Make request in background
-        curl -s -o /dev/null "http://localhost$URL" &
+echo -e "${BLUE}Running load test with Vegeta...${NC}"
+echo ""
 
-        # Show progress every 10 requests
-        if [ $((i % 10)) -eq 0 ]; then
-            echo -n "."
-        fi
+# Run Vegeta attack using Docker
+docker run --rm -i \
+    peterevans/vegeta \
+    vegeta attack -rate=$RATE -duration=$DURATION -workers=$WORKERS < "$TARGETS_FILE" \
+    | docker run --rm -i peterevans/vegeta vegeta report -type=text
 
-        # Limit concurrency
-        if [ "$(jobs -r | wc -l)" -ge "$CONCURRENCY" ]; then
-            wait -n
-        fi
-    done
-
-    # Wait for all background jobs
-    wait
-    echo ""
-    echo -e "${GREEN}✓ Completed $REQUESTS requests${NC}"
-
-else
-    # Use Apache Bench
-    echo -e "${BLUE}Using Apache Bench for load testing...${NC}"
-
-    for URL in "${URLS[@]}"; do
-        echo ""
-        echo -e "${YELLOW}Testing: http://localhost$URL${NC}"
-        ab -n $REQUESTS -c $CONCURRENCY -q "http://localhost$URL" 2>&1 | grep -E "Requests per second|Time per request|Failed requests"
-    done
-fi
+echo ""
+echo -e "${GREEN}✓ Load test completed${NC}"
 
 echo ""
 echo -e "${BLUE}=== Load Test Complete ===${NC}"

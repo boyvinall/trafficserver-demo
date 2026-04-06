@@ -1,22 +1,18 @@
 records:
-  proxy:
-    config:
-      # Enable stats for Prometheus monitoring
-      http:
-        enabled: 1
-      stats_over_http:
-        enabled: 1
-
   http:
-    cache:
-      http: 1
-      required_headers: 0  # Cache even without explicit cache headers
-      ignore_client_no_cache: 0
-      heuristic_min_lifetime: 300  # 5 minutes default cache
-      heuristic_max_lifetime: 86400  # 24 hours max
+    enabled: 1
     server_ports: 8080 8080:ipv6
     insert_response_via_str: 2  # Show which ATS node handled the request
     insert_age_in_response: 1   # Add Age header to responses
+    cache:
+      http: 1
+      required_headers: 0  # Cache even without explicit cache headers
+      ignore_client_no_cache: 1  # Ignore client no-cache directives
+      cache_responses_to_cookies: 1  # Cache responses with Set-Cookie
+      cache_urls_that_look_dynamic: 1  # Cache URLs with query strings
+      when_to_revalidate: 0  # Use TTL from Cache-Control
+      heuristic_min_lifetime: 300  # 5 minutes default cache
+      heuristic_max_lifetime: 86400  # 24 hours max
 
   reverse_proxy:
     enabled: 1

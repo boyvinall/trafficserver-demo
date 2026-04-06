@@ -33,14 +33,17 @@ Monitoring:
 - **Full Observability**: Prometheus metrics and Grafana dashboards
 - **Persistent Caches**: Named volumes preserve cache across restarts
 - **Health Checks**: All services monitored with Docker health checks
+- **Cache Purging**: PURGE method support with IP-based access control
+- **Aggressive Caching**: Caches dynamic URLs, cookies, and ignores client no-cache directives
+- **Volume Management**: Dedicated cache volumes with hosting configuration
+- **Direct Origin Access**: Origin servers exposed on ports 9001-9003 for testing
 
 ## Quick Start
 
 ### Prerequisites
 
-- Docker 20.10+
-- Docker Compose 2.0+
-- 4GB+ available RAM
+- docker
+- make
 - curl (for testing)
 
 ### Start the Cluster
@@ -48,9 +51,6 @@ Monitoring:
 ```bash
 # Start all services
 make up
-
-# Or using docker compose directly
-docker compose up -d
 ```
 
 Wait ~30 seconds for all services to become healthy, then access:
@@ -78,16 +78,22 @@ make load-test
 ### Make Commands
 
 ```bash
-make up           # Start the cluster
-make down         # Stop the cluster
-make restart      # Restart the cluster
-make build        # Rebuild all images
-make logs         # Tail all logs
-make logs-ats     # Tail ATS logs only
-make ps           # Show running containers
-make stats        # Show cluster statistics
-make test         # Run all tests
-make clean        # Stop and remove all volumes (⚠️  deletes cache data)
+make up            # Start the cluster (builds first if needed)
+make down          # Stop the cluster and remove volumes
+make restart       # Restart the cluster
+make build         # Rebuild all images
+make logs          # Tail all logs
+make logs-ats      # Tail ATS logs only
+make logs-haproxy  # Tail HAProxy logs only
+make ps            # Show running containers
+make stats         # Show cluster statistics with backend health
+make test          # Run all tests (smoke, cache, logs)
+make smoke-test    # Run smoke tests only
+make cache-test    # Test cache hit rate
+make load-test     # Run load test with Vegeta
+make test-logs     # Check logs for warnings/errors
+make lint          # Run shellcheck on all bash scripts
+make clean         # Stop and remove all volumes (⚠️  deletes cache data)
 ```
 
 ### Testing Cache Behavior
@@ -99,7 +105,7 @@ Same URL should always hit the same ATS node:
 ```bash
 # Run same URL 10 times
 for i in {1..10}; do
-  curl -I http://localhost/page1 | grep Via
+  curl -sI http://localhost/page1 | grep x-backend-server
 done
 
 # All responses should show the same ATS node (e.g., ats-1)
@@ -110,21 +116,26 @@ done
 Second request should be served from cache:
 
 ```bash
-# First request (MISS)
-curl -I http://localhost/page2
+# First request (MISS) - use GET not HEAD since ATS caches GET requests
+curl -s -o /dev/null -D - http://localhost/page2
 
-# Second request (HIT) - should show Age header
-curl -I http://localhost/page2
+# Wait 2 seconds
+sleep 2
+
+# Second request (HIT) - should show Age header increasing
+curl -s -o /dev/null -D - http://localhost/page2
 ```
+
+**Note**: Use `GET` requests (without `-I`) for cache testing. ATS doesn't cache `HEAD` requests directly, but rather from a `GET` request.
 
 #### Test #3: Verify Load Distribution
 
 Different URLs should distribute across all nodes:
 
 ```bash
-curl -I http://localhost/page1 | grep Via  # e.g., ats-1
-curl -I http://localhost/page2 | grep Via  # e.g., ats-2
-curl -I http://localhost/page3 | grep Via  # e.g., ats-3
+curl -sI http://localhost/page1 | grep x-backend-server  # e.g., ats-1
+curl -sI http://localhost/page2 | grep x-backend-server  # e.g., ats-2
+curl -sI http://localhost/page3 | grep x-backend-server  # e.g., ats-3
 ```
 
 ### API Endpoints
@@ -156,6 +167,23 @@ curl -I http://localhost/static/styles.css
 # JavaScript file
 curl -I http://localhost/static/app.js
 ```
+
+### Cache Purging
+
+Purge cached content using the PURGE method:
+
+```bash
+# Purge a specific URL from cache
+curl -X PURGE http://localhost/page1
+
+# Purge an API endpoint
+curl -X PURGE http://localhost/api/users
+
+# Check cache status after purge (should be MISS on first request)
+curl -s -o /dev/null -D - http://localhost/page1 | grep Age
+```
+
+**Access Control**: PURGE requests are restricted by IP address. See [ats/ip_allow.yaml](ats/ip_allow.yaml) for configuration.
 
 ## Monitoring
 
@@ -200,9 +228,13 @@ Shows:
 
 ### ATS Configuration Files
 
-- [ats/records.yaml](ats/records.yaml) - Main ATS configuration
-- [ats/remap.config](ats/remap.config) - URL remapping rules
+- [ats/records.yaml](ats/records.yaml) - Main ATS configuration (aggressive caching settings)
+- [ats/remap.config](ats/remap.config) - URL remapping rules (simplified, order-dependent)
 - [ats/storage.config](ats/storage.config) - Cache storage settings
+- [ats/volume.config](ats/volume.config) - Cache volume definitions
+- [ats/hosting.config](ats/hosting.config) - Volume routing configuration
+- [ats/cache.config](ats/cache.config) - Cache rules
+- [ats/ip_allow.yaml](ats/ip_allow.yaml) - IP-based access control for PURGE requests
 - [ats/plugin.config](ats/plugin.config) - Enabled plugins
 - [ats/logging.yaml](ats/logging.yaml) - Logging configuration
 
@@ -211,6 +243,24 @@ Shows:
 - [haproxy/haproxy.cfg](haproxy/haproxy.cfg) - Load balancer settings
   - `balance uri` - Hash based on request URI
   - `hash-type consistent` - Consistent hashing algorithm
+
+### Important: Remap Config Order
+
+The [ats/remap.config](ats/remap.config) has been simplified but **order matters**:
+
+1. Most specific rules first (e.g., `/api/`)
+2. Then medium specificity (e.g., `/static/`)
+3. Catch-all rules last (e.g., `/`)
+
+**Old approach** (redundant): Had separate rules for each port
+**New approach** (clean): Single rule per endpoint, ATS listens on port 8080
+
+```
+# Correct order:
+map http://localhost/api/ http://origin-api:9002/api/      # Specific
+map http://localhost/static/ http://origin-static:9003/    # Specific
+map http://localhost/ http://origin-web:9001/              # Catch-all (MUST be last)
+```
 
 ### Customization
 
@@ -280,11 +330,17 @@ make build && make up
 # Check ATS is serving requests
 curl -I http://localhost/ | grep Via
 
-# Check ATS stats
-curl http://localhost/_stats | less
+# Check ATS cache stats directly
+docker exec ats-1 curl -s http://localhost:8080/_stats | grep cache
 
-# Verify remap rules
-docker exec ats-node-1 cat /etc/trafficserver/remap.config
+# View ATS RAM cache statistics
+docker exec ats-1 curl -s http://localhost:8080/_stats | grep ram_cache
+
+# Verify remap rules (note: configs are in /opt/etc/trafficserver)
+docker exec ats-1 cat /opt/etc/trafficserver/remap.config
+
+# Test with GET request (not HEAD) as ATS caches GET by default
+curl -s -o /dev/null -D - http://localhost/page1 | grep Age
 ```
 
 ### Consistent Hashing Not Working
@@ -297,8 +353,11 @@ docker exec ats-haproxy cat /usr/local/etc/haproxy/haproxy.cfg | grep balance
 #   balance uri
 #   hash-type consistent
 
-# Check HAProxy stats
-curl http://localhost:8404/stats
+# Check HAProxy stats (requires basic auth)
+curl -u admin:admin http://localhost:8404/stats
+
+# View backend server health
+make stats
 ```
 
 ### Port Already in Use
@@ -349,6 +408,21 @@ http:
     heuristic_max_lifetime: 86400  # 24 hours
 ```
 
+### Configure Cache Behavior
+
+The current configuration uses aggressive caching. Edit [ats/records.yaml](ats/records.yaml) to tune:
+
+```yaml
+http:
+  cache:
+    ignore_client_no_cache: 1           # Ignore client Cache-Control: no-cache
+    cache_responses_to_cookies: 1       # Cache Set-Cookie responses
+    cache_urls_that_look_dynamic: 1     # Cache URLs with query strings
+    when_to_revalidate: 0               # Use TTL from Cache-Control
+```
+
+To make caching less aggressive, set these to `0`.
+
 ### Scale to More Nodes
 
 1. Add `ats-4` to [docker compose.yml](docker compose.yml) (copy `ats-3`)
@@ -369,17 +443,21 @@ http:
 ├── .env                         # Configuration
 ├── ats/                         # ATS configuration
 │   ├── Dockerfile
-│   ├── records.yaml
-│   ├── remap.config
-│   ├── storage.config
+│   ├── records.yaml            # Main config with aggressive caching
+│   ├── remap.config            # URL remapping (order matters!)
+│   ├── storage.config          # Cache storage
+│   ├── volume.config           # Cache volumes
+│   ├── hosting.config          # Volume routing
+│   ├── cache.config            # Cache rules
+│   ├── ip_allow.yaml           # Access control for PURGE
 │   ├── plugin.config
 │   └── logging.yaml
 ├── haproxy/                     # Load balancer
 │   └── haproxy.cfg
 ├── origins/                     # Backend servers
-│   ├── web/                    # HTML origin
-│   ├── api/                    # JSON API origin
-│   └── static/                 # Static files origin
+│   ├── web/                    # HTML origin (:9001)
+│   ├── api/                    # JSON API origin (:9002)
+│   └── static/                 # Static files origin (:9003)
 ├── prometheus/                  # Metrics collection
 │   ├── prometheus.yml
 │   └── alerts.yml
@@ -387,10 +465,24 @@ http:
 │   ├── grafana.ini
 │   └── provisioning/
 └── tests/                       # Test scripts
-    ├── smoke-test.sh
-    ├── test-cache-hit-rate.sh
-    └── test-load.sh
+    ├── smoke-test.sh           # Service health + cache tests
+    ├── test-cache-hit-rate.sh  # PURGE + cache verification
+    ├── test-load.sh            # Vegeta load testing
+    └── test-logs.sh            # Log error/warning checker
 ```
+
+## Recent Improvements
+
+This project has been enhanced with:
+
+- **Cache Purging**: Implemented PURGE method with IP-based access control via [ats/ip_allow.yaml](ats/ip_allow.yaml)
+- **Aggressive Caching**: Configured to cache dynamic URLs, cookies, and ignore client no-cache directives
+- **Volume Management**: Added [ats/volume.config](ats/volume.config) and [ats/hosting.config](ats/hosting.config) for better cache organization
+- **Improved Testing**: Enhanced test scripts with JSON validation, cache verification, and log checking
+- **Better Observability**: Improved Grafana dashboards with more detailed metrics
+- **Simplified Config**: Streamlined [ats/remap.config](ats/remap.config) (order-dependent rules)
+- **Load Testing**: Integrated Vegeta for realistic load testing
+- **Direct Origin Access**: Origins exposed on ports 9001-9003 for direct testing
 
 ## Future Enhancements
 
@@ -398,9 +490,6 @@ Ideas for extending this example:
 
 ### SSL/TLS Termination
 Add HTTPS support with Let's Encrypt or self-signed certificates.
-
-### Cache Purging
-Implement cache invalidation API and webhooks.
 
 ### ESI (Edge Side Includes)
 Fragment caching for dynamic pages.
