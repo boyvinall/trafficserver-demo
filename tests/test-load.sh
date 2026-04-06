@@ -13,8 +13,8 @@ echo -e "${BLUE}=== ATS Cluster Load Test ===${NC}"
 echo ""
 
 # Configuration
-RATE=10              # requests per second
-DURATION=10s         # test duration
+RATE=1000            # requests per second
+DURATION=180s        # test duration
 WORKERS=10           # concurrent workers
 URLS=(
     "/"
@@ -39,14 +39,14 @@ TARGETS_FILE=$(mktemp)
 trap 'rm -f "$TARGETS_FILE"' EXIT
 
 for URL in "${URLS[@]}"; do
-    echo "GET http://host.docker.internal$URL" >> "$TARGETS_FILE"
+    echo "GET http://localhost$URL" >> "$TARGETS_FILE"
 done
 
 echo -e "${BLUE}Running load test with Vegeta...${NC}"
 echo ""
 
 # Run Vegeta attack using Docker
-docker run --rm -i \
+docker run --rm -i --net container:ats-haproxy \
     peterevans/vegeta \
     vegeta attack -rate=$RATE -duration=$DURATION -workers=$WORKERS < "$TARGETS_FILE" \
     | docker run --rm -i peterevans/vegeta vegeta report -type=text

@@ -25,6 +25,7 @@
       "targets": [
         {
           "expr": "proxy_process_traffic_server_memory_rss",
+          "legendFormat": "{{instance}}",
           "refId": "A"
         }
       ],
@@ -58,6 +59,7 @@
       "targets": [
         {
           "expr": "proxy_process_http_current_client_connections",
+          "legendFormat": "{{instance}}",
           "refId": "A"
         }
       ],
@@ -83,6 +85,7 @@
       "targets": [
         {
           "expr": "proxy_process_http_current_server_connections",
+          "legendFormat": "{{instance}}",
           "refId": "A"
         }
       ],
@@ -108,6 +111,7 @@
       "targets": [
         {
           "expr": "proxy_process_http_current_client_transactions",
+          "legendFormat": "{{instance}}",
           "refId": "A"
         }
       ],
@@ -133,6 +137,7 @@
       "targets": [
         {
           "expr": "100 * proxy_process_cache_total_hits / (proxy_process_cache_total_hits + proxy_process_cache_total_misses)",
+          "legendFormat": "{{instance}}",
           "refId": "A"
         }
       ],
@@ -140,7 +145,7 @@
         "reduceOptions": {
           "calcs": ["lastNotNull"]
         },
-        "textMode": "value",
+        "textMode": "value_and_name",
         "colorMode": "value",
         "graphMode": "area"
       },
@@ -243,44 +248,38 @@
     },
     {
       "id": 13,
-      "type": "bargauge",
+      "type": "timeseries",
       "title": "Response Status Codes",
       "gridPos": {"h": 8, "w": 8, "x": 0, "y": 14},
       "targets": [
         {
-          "expr": "proxy_process_http_2xx_responses",
-          "legendFormat": "2xx Success",
+          "expr": "rate(proxy_process_http_2xx_responses[1m])",
+          "legendFormat": "2xx - {{instance}}",
           "refId": "A"
         },
         {
-          "expr": "proxy_process_http_3xx_responses",
-          "legendFormat": "3xx Redirect",
+          "expr": "rate(proxy_process_http_3xx_responses[1m])",
+          "legendFormat": "3xx - {{instance}}",
           "refId": "B"
         },
         {
-          "expr": "proxy_process_http_4xx_responses",
-          "legendFormat": "4xx Client Error",
+          "expr": "rate(proxy_process_http_4xx_responses[1m])",
+          "legendFormat": "4xx - {{instance}}",
           "refId": "C"
         },
         {
-          "expr": "proxy_process_http_5xx_responses",
-          "legendFormat": "5xx Server Error",
+          "expr": "rate(proxy_process_http_5xx_responses[1m])",
+          "legendFormat": "5xx - {{instance}}",
           "refId": "D"
         }
       ],
-      "options": {
-        "orientation": "horizontal",
-        "displayMode": "gradient",
-        "showUnfilled": true
-      },
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {"value": 0, "color": "green"}
-            ]
+          "unit": "reqps",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "stacking": {"mode": "normal"}
           }
         },
         "overrides": [
@@ -293,6 +292,14 @@
             "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "red"}}]
           }
         ]
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": ["max"]
+        }
       }
     },
     {
@@ -303,32 +310,32 @@
       "targets": [
         {
           "expr": "rate(proxy_process_http_get_requests[1m])",
-          "legendFormat": "GET",
+          "legendFormat": "GET - {{instance}}",
           "refId": "A"
         },
         {
           "expr": "rate(proxy_process_http_post_requests[1m])",
-          "legendFormat": "POST",
+          "legendFormat": "POST - {{instance}}",
           "refId": "B"
         },
         {
           "expr": "rate(proxy_process_http_head_requests[1m])",
-          "legendFormat": "HEAD",
+          "legendFormat": "HEAD - {{instance}}",
           "refId": "C"
         },
         {
           "expr": "rate(proxy_process_http_put_requests[1m])",
-          "legendFormat": "PUT",
+          "legendFormat": "PUT - {{instance}}",
           "refId": "D"
         },
         {
           "expr": "rate(proxy_process_http_delete_requests[1m])",
-          "legendFormat": "DELETE",
+          "legendFormat": "DELETE - {{instance}}",
           "refId": "E"
         },
         {
           "expr": "rate(proxy_process_http_connect_requests[1m])",
-          "legendFormat": "CONNECT",
+          "legendFormat": "CONNECT - {{instance}}",
           "refId": "F"
         }
       ],
@@ -340,6 +347,14 @@
             "fillOpacity": 10,
             "stacking": {"mode": "normal"}
           }
+        }
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": ["max"]
         }
       }
     },
@@ -435,12 +450,12 @@
       "targets": [
         {
           "expr": "proxy_process_cache_bytes_used",
-          "legendFormat": "Used",
+          "legendFormat": "Used ({{instance}})",
           "refId": "A"
         },
         {
           "expr": "proxy_process_cache_bytes_total",
-          "legendFormat": "Total",
+          "legendFormat": "Total ({{instance}})",
           "refId": "B"
         }
       ],
@@ -466,6 +481,7 @@
       "targets": [
         {
           "expr": "100 * proxy_process_cache_bytes_used / proxy_process_cache_bytes_total",
+          "legendFormat": "{{instance}}",
           "refId": "A"
         }
       ],
@@ -497,12 +513,12 @@
       "targets": [
         {
           "expr": "proxy_process_cache_ram_cache_bytes_used",
-          "legendFormat": "RAM Used",
+          "legendFormat": "RAM Used ({{instance}})",
           "refId": "A"
         },
         {
           "expr": "proxy_process_cache_ram_cache_total_bytes",
-          "legendFormat": "RAM Total",
+          "legendFormat": "RAM Total ({{instance}})",
           "refId": "B"
         }
       ],
@@ -894,59 +910,66 @@
     },
     {
       "id": 44,
-      "type": "bargauge",
+      "type": "timeseries",
       "title": "Event Loop Time Distribution",
       "gridPos": {"h": 10, "w": 24, "x": 0, "y": 63},
       "targets": [
         {
           "expr": "proxy_process_eventloop_time_0ms",
-          "legendFormat": "0-5ms",
+          "legendFormat": "0-5ms - {{instance}}",
           "refId": "A"
         },
         {
           "expr": "proxy_process_eventloop_time_5ms",
-          "legendFormat": "5-10ms",
+          "legendFormat": "5-10ms - {{instance}}",
           "refId": "B"
         },
         {
           "expr": "proxy_process_eventloop_time_10ms",
-          "legendFormat": "10-15ms",
+          "legendFormat": "10-15ms - {{instance}}",
           "refId": "C"
         },
         {
           "expr": "proxy_process_eventloop_time_15ms",
-          "legendFormat": "15-20ms",
+          "legendFormat": "15-20ms - {{instance}} ",
           "refId": "D"
         },
         {
           "expr": "proxy_process_eventloop_time_20ms",
-          "legendFormat": "20-25ms",
+          "legendFormat": "20-25ms - {{instance}}",
           "refId": "E"
         },
         {
           "expr": "proxy_process_eventloop_time_25ms",
-          "legendFormat": "25-30ms",
+          "legendFormat": "25-30ms - {{instance}}",
           "refId": "F"
         },
         {
           "expr": "proxy_process_eventloop_time_50ms",
-          "legendFormat": "50-60ms",
+          "legendFormat": "50-60ms - {{instance}}",
           "refId": "G"
         },
         {
           "expr": "proxy_process_eventloop_time_100ms",
-          "legendFormat": "100-120ms",
+          "legendFormat": "100-120ms - {{instance}}",
           "refId": "H"
         }
       ],
-      "options": {
-        "orientation": "horizontal",
-        "displayMode": "gradient",
-        "showUnfilled": true
-      },
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        }
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": ["lastNotNull", "mean", "max"]
         }
       }
     },

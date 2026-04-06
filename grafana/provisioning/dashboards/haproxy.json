@@ -1,0 +1,919 @@
+{
+  "title": "HAProxy Metrics",
+  "uid": "haproxy",
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "10s",
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Overview",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0},
+      "collapsed": false
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Current Sessions",
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 1},
+      "targets": [
+        {
+          "expr": "sum(haproxy_frontend_current_sessions)",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        },
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Total Requests/sec",
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 1},
+      "targets": [
+        {
+          "expr": "sum(rate(haproxy_frontend_http_requests_total[1m]))",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        },
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "decimals": 1
+        }
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Backend Servers Up",
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 1},
+      "targets": [
+        {
+          "expr": "sum(haproxy_server_up)",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        },
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": 0, "color": "red"},
+              {"value": 1, "color": "green"}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Total Bandwidth",
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 1},
+      "targets": [
+        {
+          "expr": "sum(rate(haproxy_frontend_bytes_in_total[1m]) + rate(haproxy_frontend_bytes_out_total[1m]))",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        },
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "decimals": 1
+        }
+      }
+    },
+    {
+      "id": 10,
+      "type": "row",
+      "title": "Frontend Metrics",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 5},
+      "collapsed": false
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Frontend Request Rate",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6},
+      "targets": [
+        {
+          "expr": "rate(haproxy_frontend_http_requests_total[1m])",
+          "legendFormat": "{{proxy}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        }
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["lastNotNull", "mean", "max"]
+        }
+      }
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Frontend Sessions",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 6},
+      "targets": [
+        {
+          "expr": "haproxy_frontend_current_sessions",
+          "legendFormat": "{{proxy}} - Current",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(haproxy_frontend_sessions_total[1m])",
+          "legendFormat": "{{proxy}} - Rate",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        }
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["lastNotNull", "mean", "max"]
+        }
+      }
+    },
+    {
+      "id": 13,
+      "type": "timeseries",
+      "title": "Frontend Bytes In/Out",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 14},
+      "targets": [
+        {
+          "expr": "rate(haproxy_frontend_bytes_in_total[1m])",
+          "legendFormat": "{{proxy}} - In",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(haproxy_frontend_bytes_out_total[1m])",
+          "legendFormat": "{{proxy}} - Out",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        }
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["lastNotNull", "mean", "max"]
+        }
+      }
+    },
+    {
+      "id": 14,
+      "type": "timeseries",
+      "title": "Frontend HTTP Response Codes",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 14},
+      "targets": [
+        {
+          "expr": "rate(haproxy_frontend_http_responses_total{code=\"2xx\"}[1m])",
+          "legendFormat": "{{proxy}} - 2xx",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(haproxy_frontend_http_responses_total{code=\"3xx\"}[1m])",
+          "legendFormat": "{{proxy}} - 3xx",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(haproxy_frontend_http_responses_total{code=\"4xx\"}[1m])",
+          "legendFormat": "{{proxy}} - 4xx",
+          "refId": "C"
+        },
+        {
+          "expr": "rate(haproxy_frontend_http_responses_total{code=\"5xx\"}[1m])",
+          "legendFormat": "{{proxy}} - 5xx",
+          "refId": "D"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "stacking": {"mode": "normal"}
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {"id": "byRegexp", "options": ".*5xx.*"},
+            "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "red"}}]
+          },
+          {
+            "matcher": {"id": "byRegexp", "options": ".*4xx.*"},
+            "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "yellow"}}]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["lastNotNull", "mean", "max"]
+        }
+      }
+    },
+    {
+      "id": 20,
+      "type": "row",
+      "title": "Backend Metrics",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 22},
+      "collapsed": false
+    },
+    {
+      "id": 21,
+      "type": "timeseries",
+      "title": "Backend Response Time",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 23},
+      "targets": [
+        {
+          "expr": "haproxy_backend_response_time_average_seconds",
+          "legendFormat": "{{proxy}} - Avg",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 20
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": 0, "color": "green"},
+              {"value": 0.5, "color": "yellow"},
+              {"value": 1, "color": "red"}
+            ]
+          }
+        }
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["lastNotNull", "mean", "max"]
+        }
+      }
+    },
+    {
+      "id": 22,
+      "type": "timeseries",
+      "title": "Backend Connections",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 23},
+      "targets": [
+        {
+          "expr": "haproxy_backend_current_sessions",
+          "legendFormat": "{{proxy}} - Current Sessions",
+          "refId": "A"
+        },
+        {
+          "expr": "haproxy_backend_current_queue",
+          "legendFormat": "{{proxy}} - Queue",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        }
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["lastNotNull", "mean", "max"]
+        }
+      }
+    },
+    {
+      "id": 23,
+      "type": "timeseries",
+      "title": "Backend Request Rate",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 31},
+      "targets": [
+        {
+          "expr": "rate(haproxy_backend_http_requests_total[1m])",
+          "legendFormat": "{{proxy}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        }
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["lastNotNull", "mean", "max"]
+        }
+      }
+    },
+    {
+      "id": 24,
+      "type": "timeseries",
+      "title": "Backend HTTP Response Codes",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 31},
+      "targets": [
+        {
+          "expr": "rate(haproxy_backend_http_responses_total{code=\"2xx\"}[1m])",
+          "legendFormat": "{{proxy}} - 2xx",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(haproxy_backend_http_responses_total{code=\"3xx\"}[1m])",
+          "legendFormat": "{{proxy}} - 3xx",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(haproxy_backend_http_responses_total{code=\"4xx\"}[1m])",
+          "legendFormat": "{{proxy}} - 4xx",
+          "refId": "C"
+        },
+        {
+          "expr": "rate(haproxy_backend_http_responses_total{code=\"5xx\"}[1m])",
+          "legendFormat": "{{proxy}} - 5xx",
+          "refId": "D"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "stacking": {"mode": "normal"}
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {"id": "byRegexp", "options": ".*5xx.*"},
+            "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "red"}}]
+          },
+          {
+            "matcher": {"id": "byRegexp", "options": ".*4xx.*"},
+            "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "yellow"}}]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["lastNotNull", "mean", "max"]
+        }
+      }
+    },
+    {
+      "id": 30,
+      "type": "row",
+      "title": "Server Health",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 39},
+      "collapsed": false
+    },
+    {
+      "id": 31,
+      "type": "stat",
+      "title": "Server Status",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 40},
+      "targets": [
+        {
+          "expr": "haproxy_server_up",
+          "legendFormat": "{{proxy}}/{{server}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        },
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {"text": "DOWN", "color": "red"},
+                "1": {"text": "UP", "color": "green"}
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": 0, "color": "red"},
+              {"value": 1, "color": "green"}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 32,
+      "type": "timeseries",
+      "title": "Server Response Time",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 40},
+      "targets": [
+        {
+          "expr": "haproxy_server_response_time_average_seconds",
+          "legendFormat": "{{proxy}}/{{server}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": 0, "color": "green"},
+              {"value": 0.5, "color": "yellow"},
+              {"value": 1, "color": "red"}
+            ]
+          }
+        }
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["lastNotNull", "mean", "max"]
+        }
+      }
+    },
+    {
+      "id": 33,
+      "type": "timeseries",
+      "title": "Server Connections",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 48},
+      "targets": [
+        {
+          "expr": "haproxy_server_current_sessions",
+          "legendFormat": "{{proxy}}/{{server}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        }
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["lastNotNull", "mean", "max"]
+        }
+      }
+    },
+    {
+      "id": 34,
+      "type": "timeseries",
+      "title": "Server Queue Depth",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 48},
+      "targets": [
+        {
+          "expr": "haproxy_server_current_queue",
+          "legendFormat": "{{proxy}}/{{server}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": 0, "color": "green"},
+              {"value": 10, "color": "yellow"},
+              {"value": 50, "color": "red"}
+            ]
+          }
+        }
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["lastNotNull", "mean", "max"]
+        }
+      }
+    },
+    {
+      "id": 40,
+      "type": "row",
+      "title": "Error Tracking",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 56},
+      "collapsed": false
+    },
+    {
+      "id": 41,
+      "type": "timeseries",
+      "title": "Connection Errors",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 57},
+      "targets": [
+        {
+          "expr": "rate(haproxy_backend_connection_errors_total[1m])",
+          "legendFormat": "{{proxy}} - Connection",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(haproxy_backend_connection_attempts_total[1m])",
+          "legendFormat": "{{proxy}} - Attempts",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        }
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["lastNotNull", "mean", "max"]
+        }
+      }
+    },
+    {
+      "id": 42,
+      "type": "timeseries",
+      "title": "Backend Errors",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 57},
+      "targets": [
+        {
+          "expr": "rate(haproxy_backend_response_errors_total[1m])",
+          "legendFormat": "{{proxy}} - Response",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(haproxy_backend_retry_warnings_total[1m])",
+          "legendFormat": "{{proxy}} - Retries",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(haproxy_backend_redispatch_warnings_total[1m])",
+          "legendFormat": "{{proxy}} - Redispatch",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {"id": "byRegexp", "options": ".*Response.*"},
+            "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "red"}}]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["lastNotNull", "mean", "max"]
+        }
+      }
+    },
+    {
+      "id": 43,
+      "type": "stat",
+      "title": "Request Denied",
+      "gridPos": {"h": 6, "w": 12, "x": 0, "y": 65},
+      "targets": [
+        {
+          "expr": "haproxy_frontend_requests_denied_total",
+          "legendFormat": "{{proxy}} - Frontend",
+          "refId": "A"
+        },
+        {
+          "expr": "haproxy_backend_requests_denied_total",
+          "legendFormat": "{{proxy}} - Backend",
+          "refId": "B"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        },
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": 0, "color": "green"},
+              {"value": 1, "color": "yellow"},
+              {"value": 10, "color": "red"}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 44,
+      "type": "stat",
+      "title": "Server Check Failures",
+      "gridPos": {"h": 6, "w": 12, "x": 12, "y": 65},
+      "targets": [
+        {
+          "expr": "haproxy_server_check_failures_total",
+          "legendFormat": "{{proxy}}/{{server}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        },
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": 0, "color": "green"},
+              {"value": 1, "color": "yellow"},
+              {"value": 5, "color": "red"}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 50,
+      "type": "row",
+      "title": "Session Limits & Capacity",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 71},
+      "collapsed": false
+    },
+    {
+      "id": 51,
+      "type": "gauge",
+      "title": "Frontend Session Utilization",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 72},
+      "targets": [
+        {
+          "expr": "100 * haproxy_frontend_current_sessions / haproxy_frontend_limit_sessions",
+          "legendFormat": "{{proxy}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": 0, "color": "green"},
+              {"value": 70, "color": "yellow"},
+              {"value": 90, "color": "red"}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 52,
+      "type": "gauge",
+      "title": "Backend Session Utilization",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 72},
+      "targets": [
+        {
+          "expr": "100 * haproxy_backend_current_sessions / haproxy_backend_limit_sessions",
+          "legendFormat": "{{proxy}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": 0, "color": "green"},
+              {"value": 70, "color": "yellow"},
+              {"value": 90, "color": "red"}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 53,
+      "type": "timeseries",
+      "title": "Session Rate",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 80},
+      "targets": [
+        {
+          "expr": "rate(haproxy_frontend_sessions_total[1m])",
+          "legendFormat": "{{proxy}} - Frontend",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(haproxy_backend_sessions_total[1m])",
+          "legendFormat": "{{proxy}} - Backend",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        }
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["lastNotNull", "mean", "max"]
+        }
+      }
+    },
+    {
+      "id": 54,
+      "type": "stat",
+      "title": "Max Sessions",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 80},
+      "targets": [
+        {
+          "expr": "haproxy_frontend_max_sessions",
+          "legendFormat": "{{proxy}} - Frontend Max",
+          "refId": "A"
+        },
+        {
+          "expr": "haproxy_backend_max_sessions",
+          "legendFormat": "{{proxy}} - Backend Max",
+          "refId": "B"
+        },
+        {
+          "expr": "haproxy_server_max_sessions",
+          "legendFormat": "{{proxy}}/{{server}} - Server Max",
+          "refId": "C"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        },
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "orientation": "vertical"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      }
+    }
+  ]
+}

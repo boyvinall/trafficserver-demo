@@ -1,10 +1,13 @@
 # Apache Traffic Server Cluster Example
 
-A production-ready example of running Apache Traffic Server (ATS) as a 3-node cluster using Docker Compose, with consistent hashing load balancing and full monitoring stack (Prometheus + Grafana).
+An example of running Apache Traffic Server (ATS) as a 3-node cluster using Docker Compose, with consistent hashing load balancing and full monitoring stack (Prometheus + Grafana).  
+
+[!NOTE]
+There's a lot in here which is production-ready but some things are optimised for a test setup, so a full review is recommended.
 
 ## Architecture
 
-```
+```plaintext
 Client Requests
        ↓
    HAProxy :80
@@ -55,10 +58,10 @@ make up
 
 Wait ~30 seconds for all services to become healthy, then access:
 
-- **Website**: http://localhost
-- **Grafana**: http://localhost:3000 (admin/admin)
-- **Prometheus**: http://localhost:9090
-- **HAProxy Stats**: http://localhost:8404/stats (admin/admin)
+- **Website**: <http://localhost>
+- **Grafana**: <http://localhost:3000> (admin/admin)
+- **Prometheus**: <http://localhost:9090>
+- **HAProxy Stats**: <http://localhost:8404/stats> (admin/admin)
 
 ### Verify It's Working
 
@@ -105,7 +108,7 @@ Same URL should always hit the same ATS node:
 ```bash
 # Run same URL 10 times
 for i in {1..10}; do
-  curl -sI http://localhost/page1 | grep x-backend-server
+  curl -sI http://localhost/page1 | grep via
 done
 
 # All responses should show the same ATS node (e.g., ats-1)
@@ -133,9 +136,9 @@ curl -s -o /dev/null -D - http://localhost/page2
 Different URLs should distribute across all nodes:
 
 ```bash
-curl -sI http://localhost/page1 | grep x-backend-server  # e.g., ats-1
-curl -sI http://localhost/page2 | grep x-backend-server  # e.g., ats-2
-curl -sI http://localhost/page3 | grep x-backend-server  # e.g., ats-3
+curl -sI http://localhost/page1 | grep via  # e.g., ats-1
+curl -sI http://localhost/page2 | grep via  # e.g., ats-2
+curl -sI http://localhost/page3 | grep via  # e.g., ats-3
 ```
 
 ### API Endpoints
@@ -189,9 +192,10 @@ curl -s -o /dev/null -D - http://localhost/page1 | grep Age
 
 ### Grafana Dashboards
 
-Access Grafana at http://localhost:3000 (admin/admin)
+Access Grafana at <http://localhost:3000> (admin/admin)
 
 The pre-loaded dashboard shows:
+
 - ATS node status (up/down)
 - Origin server health
 - HAProxy status
@@ -200,9 +204,10 @@ The pre-loaded dashboard shows:
 
 ### Prometheus Queries
 
-Access Prometheus at http://localhost:9090
+Access Prometheus at <http://localhost:9090>
 
 Example queries:
+
 ```promql
 # Number of ATS nodes up
 sum(up{service="trafficserver"})
@@ -216,9 +221,10 @@ up
 
 ### HAProxy Statistics
 
-Access HAProxy stats at http://localhost:8404/stats (admin/admin)
+Access HAProxy stats at <http://localhost:8404/stats> (admin/admin)
 
 Shows:
+
 - Backend server status (ats-1, ats-2, ats-3)
 - Request rates
 - Response times
@@ -255,7 +261,7 @@ The [ats/remap.config](ats/remap.config) has been simplified but **order matters
 **Old approach** (redundant): Had separate rules for each port
 **New approach** (clean): Single rule per endpoint, ATS listens on port 8080
 
-```
+```plaintext
 # Correct order:
 map http://localhost/api/ http://origin-api:9002/api/      # Specific
 map http://localhost/static/ http://origin-static:9003/    # Specific
@@ -265,6 +271,7 @@ map http://localhost/ http://origin-web:9001/              # Catch-all (MUST be 
 ### Customization
 
 Edit [.env](.env) to change:
+
 - Port mappings
 - Grafana credentials
 - Cache size
@@ -275,7 +282,8 @@ Edit [.env](.env) to change:
 ### Why It Matters
 
 **Without consistent hashing (round-robin):**
-```
+
+```plaintext
 Request 1: /page1 → ats-1 (MISS, fetches from origin, caches)
 Request 2: /page1 → ats-2 (MISS, fetches from origin, caches)
 Request 3: /page1 → ats-3 (MISS, fetches from origin, caches)
@@ -283,7 +291,8 @@ Result: 0% cache hit rate, same content cached 3 times
 ```
 
 **With consistent hashing:**
-```
+
+```plaintext
 Request 1: /page1 → ats-1 (MISS, fetches from origin, caches)
 Request 2: /page1 → ats-1 (HIT, served from cache)
 Request 3: /page1 → ats-1 (HIT, served from cache)
@@ -363,6 +372,7 @@ make stats
 ### Port Already in Use
 
 Edit [.env](.env) and change conflicting ports:
+
 ```bash
 HAPROXY_HTTP_PORT=8080
 PROMETHEUS_PORT=9091
@@ -370,6 +380,7 @@ GRAFANA_PORT=3001
 ```
 
 Then restart:
+
 ```bash
 make restart
 ```
@@ -392,7 +403,8 @@ docker compose restart prometheus grafana
 ### Increase Cache Size
 
 Edit [ats/storage.config](ats/storage.config):
-```
+
+```plaintext
 /cache/trafficserver 500G
 ```
 
@@ -401,6 +413,7 @@ Change to desired size (e.g., `1T` for 1 terabyte).
 ### Adjust Cache TTLs
 
 Edit [ats/records.yaml](ats/records.yaml):
+
 ```yaml
 http:
   cache:
@@ -427,15 +440,17 @@ To make caching less aggressive, set these to `0`.
 
 1. Add `ats-4` to [docker compose.yml](docker compose.yml) (copy `ats-3`)
 2. Add `ats-4` to [haproxy/haproxy.cfg](haproxy/haproxy.cfg):
-   ```
+
+   ```plaintext
    server ats4 ats-4:8080 check
    ```
+
 3. Add scrape target to [prometheus/prometheus.yml](prometheus/prometheus.yml)
 4. Restart: `make restart`
 
 ## Project Structure
 
-```
+```plaintext
 .
 ├── README.md                    # This file
 ├── docker compose.yml           # Main orchestration
@@ -489,32 +504,41 @@ This project has been enhanced with:
 Ideas for extending this example:
 
 ### SSL/TLS Termination
+
 Add HTTPS support with Let's Encrypt or self-signed certificates.
 
 ### ESI (Edge Side Includes)
+
 Fragment caching for dynamic pages.
 
 ### Rate Limiting
+
 Add rate limiting plugin to protect origins.
 
 ### GeoIP Routing
+
 Route based on client location for geo-distributed deployments.
 
 ### Distributed Tracing
+
 Add Jaeger for request tracing across all components.
 
 ### Alerting
+
 Connect Prometheus alerts to Slack/PagerDuty.
 
 ### Blue/Green Deployments
+
 Show how to roll out origin changes without downtime.
 
 ### Cache Warming
+
 Scripts to pre-populate caches with common content.
 
 ## Contributing
 
 Contributions welcome! Ideas:
+
 - Add more test scenarios
 - Improve Grafana dashboards
 - Add cache purge examples

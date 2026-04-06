@@ -43,6 +43,7 @@ services:
       - ./ats/logging.yaml:/opt/etc/trafficserver/logging.yaml:ro
     environment:
       - TS_NODE_ID=1
+      - PROXY_CONFIG_PROXY_NAME=ats-node-1
     networks:
       - frontend
       - backend
@@ -70,6 +71,7 @@ services:
       - ./ats/logging.yaml:/opt/etc/trafficserver/logging.yaml:ro
     environment:
       - TS_NODE_ID=2
+      - PROXY_CONFIG_PROXY_NAME=ats-node-2
     networks:
       - frontend
       - backend
@@ -97,6 +99,7 @@ services:
       - ./ats/logging.yaml:/opt/etc/trafficserver/logging.yaml:ro
     environment:
       - TS_NODE_ID=3
+      - PROXY_CONFIG_PROXY_NAME=ats-node-3
     networks:
       - frontend
       - backend
